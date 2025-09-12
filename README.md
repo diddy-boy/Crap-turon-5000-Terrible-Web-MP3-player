@@ -14,3 +14,4 @@ Load your own MP3 songs or select from a list of web radios to listen to.
 
 All effects work on web radio as well as MP3 songs.
 No ogg vorbis support, sorry.
+just copy and paste the html file and open in a web browser, operating system irrelevant.
