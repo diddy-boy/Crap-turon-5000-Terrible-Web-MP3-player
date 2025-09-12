@@ -1,5 +1,5 @@
 # Crap turon 5000 Web and MP3 player
-A web page based MP3 player that has effects to replicate cheap budget HI-FI, where quantity take precidence of quality.
+A web page based MP3 player that has effects to replicate cheap budget HI-FI, where quantity take precedence over quality.
 
 Plenty of good MP3 players out there, so why not make a terrible one based on a 1990's Hi-Fi...  but made to look like the budget brands.
 No expence was spared because there was none to start with ...
