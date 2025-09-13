@@ -37,11 +37,14 @@
 		.fm-radio-box select { width: 97%; }
         .equalizer { display:flex; justify-content:space-between; align-items:center; height:140px; background:#252525; padding:20px; border-radius:6px; border:2px solid #555; box-shadow: inset 0 0 8px rgba(0,0,0,0.8); }
         .eq-band { display:flex; flex-direction:column; align-items:center; width:9%; text-align:center; position:relative; }
+        .loudness-band { display:flex; flex-direction:column; align-items:center; width:9%; text-align:center; position:relative; margin-left: auto; }
         .eq-band label { font-size:20px; color:#b0b0b0; text-shadow:0 1px 2px rgba(0,0,0,0.5); margin-bottom:1px; }
+        .loudness-band label { font-size:20px; color:#b0b0b0; text-shadow:0 1px 2px rgba(0,0,0,0.5); margin-bottom:1px; }
         .gain-label { position:absolute; font-size:10px; color:#888; font-family:'Courier New', monospace; user-select:none; }
         .gain-label.plus { top:25px; right:15px; }
         .gain-label.minus { bottom:1px; right:15px; }
         .eq-band input { -webkit-appearance: slider-vertical; width:20px; height:100px; background: linear-gradient(#555,#333); border:1px solid #777; border-radius:4px; box-shadow: inset 0 0 4px rgba(0,0,0,0.5); }
+        .loudness-band input { -webkit-appearance: slider-vertical; width:20px; height:100px; background: linear-gradient(#555,#333); border:1px solid #777; border-radius:4px; box-shadow: inset 0 0 4px rgba(0,0,0,0.5); }
         .spectrum-analyzer { height:120px; background:#1e1e1e; position:relative; border:3px solid #555; border-radius:6px; box-shadow: inset 0 0 8px rgba(0,0,0,0.9); }
         canvas.spectrum-canvas { width:100%; height:100%; display:block; }
 		.station-list { background-color: grey; color: white; }
@@ -164,11 +167,12 @@
         </div>
 
         <div class="section stereo-effect">
-            <button class="button-effect" id="binatoneButton">Crap-turon Bass Boost: OFF</button>
+            <button class="button-effect" id="binatoneButton">Crap Bass Boost: OFF</button>
             <button class="button-effect" id="hyperbassButton">Hyper Bass: OFF</button>
             <button class="button-effect" id="cassetteButton">Cassette Mode: OFF</button>
             <button class="button-effect" id="stereoWideButton">Stereo Wide: OFF</button>
             <button class="button-effect" id="speedButton">Speed: Normal</button>
+            <button class="button-effect" id="loudnessButton">Loudness: OFF</button>
         </div>
 
         <div class="section playlist">
@@ -211,13 +215,15 @@
         const cassetteButton = document.getElementById('cassetteButton');
         const stereoWideButton = document.getElementById('stereoWideButton');
         const speedButton = document.getElementById('speedButton');
+        const loudnessButton = document.getElementById('loudnessButton');
         const eqSliders = document.querySelectorAll('.eq-slider');
+        // Removed loudnessSlider variable
 
         // Radio Element
         const radioStation = document.getElementById('radioStation');
 
         // Audio Context Variables
-        let audioCtx, analyser, audioElement, source, eqFilters, lowpass, highpass, bassBoost, noiseSource, noiseGainNode, stereoPanner;
+        let audioCtx, analyser, audioElement, source, eqFilters, lowpass, highpass, bassBoost, noiseSource, noiseGainNode, stereoPanner, loudnessGainNode;
 
         // Playlist Variables
         let playlist = [];
@@ -246,7 +252,8 @@
                 const settings = {
                     volume: volume,
                     hyperBassOn: hyperbassButton.classList.contains('on'),
-                    equalizer: Array.from(eqSliders).map(slider => parseFloat(slider.value))
+                    equalizer: Array.from(eqSliders).map(slider => parseFloat(slider.value)),
+                    loudnessOn: loudnessButton.classList.contains('on') // Save button state
                 };
                 localStorage.setItem('crapTuronSettings', JSON.stringify(settings));
             } catch (e) {
@@ -292,6 +299,19 @@
                                 eqFilters[index].gain.value = gainValue;
                             }
                         });
+                    }
+
+                    // Restore Loudness
+                    if (loudnessGainNode) {
+                        if (settings.loudnessOn) {
+                            loudnessButton.classList.add('on');
+                            loudnessButton.textContent = 'Loudness: ON';
+                            loudnessGainNode.gain.value = 2; // Set a subtle gain
+                        } else {
+                            loudnessButton.classList.remove('on');
+                            loudnessButton.textContent = 'Loudness: OFF';
+                            loudnessGainNode.gain.value = 1; // Set to unity gain (no change)
+                        }
                     }
                 }
             } catch (e) {
@@ -544,7 +564,8 @@
                 if (!eqFilters) initAudioContext();
 
                 source.connect(eqFilters[0]);
-                eqFilters[eqFilters.length - 1].connect(bassBoost);
+                eqFilters[eqFilters.length - 1].connect(loudnessGainNode);
+                loudnessGainNode.connect(bassBoost);
                 bassBoost.connect(lowpass);
                 lowpass.connect(highpass);
                 highpass.connect(stereoPanner);
@@ -731,6 +752,7 @@
                 lowpass = audioCtx.createBiquadFilter(); lowpass.type = 'lowpass'; lowpass.frequency.value = 20000; lowpass.Q.value = 1;
                 highpass = audioCtx.createBiquadFilter(); highpass.type = 'highpass'; highpass.frequency.value = 20; highpass.Q.value = 1;
                 bassBoost = audioCtx.createBiquadFilter(); bassBoost.type = 'lowshelf'; bassBoost.frequency.value = 40; bassBoost.gain.value = 0;
+                loudnessGainNode = audioCtx.createGain(); loudnessGainNode.gain.value = 1; // Default to unity gain
 
                 // White noise for hiss
                 const bufferSize = audioCtx.sampleRate;
@@ -796,7 +818,7 @@
             binatoneButton.addEventListener('click', () => {
                 if (!isPoweredOn) return;
                 const isOn = binatoneButton.classList.toggle('on');
-                binatoneButton.textContent = `Crap-turon Bass Boost: ${isOn ? 'ON' : 'OFF'}`;
+                binatoneButton.textContent = `Crap Bass Boost: ${isOn ? 'ON' : 'OFF'}`;
                 if (isOn) { lowpass.frequency.value = 3000; highpass.frequency.value = 300; } else { lowpass.frequency.value = 20000; highpass.frequency.value = 20; }
             });
 
@@ -832,6 +854,16 @@
                 if (audioElement && !cassetteButton.classList.contains('on')) audioElement.playbackRate = speedSetting.rate;
             });
 
+            loudnessButton.addEventListener('click', () => {
+                if (!isPoweredOn) return;
+                const isOn = loudnessButton.classList.toggle('on');
+                loudnessButton.textContent = `Loudness: ${isOn ? 'ON' : 'OFF'}`;
+                if (loudnessGainNode) {
+                    loudnessGainNode.gain.value = isOn ? 1.2 : 1;
+                }
+                saveSettings();
+            });
+
             loadCdButton.addEventListener('mousedown', () => { if (!isPoweredOn) return; loadCdButton.classList.add('on'); });
             loadCdButton.addEventListener('mouseup', () => { if (!isPoweredOn) return; loadCdButton.classList.remove('on'); });
         }
@@ -865,7 +897,8 @@
             audioElement.addEventListener('canplay', () => {
                 source = audioCtx.createMediaElementSource(audioElement);
                 source.connect(eqFilters[0]);
-                eqFilters[eqFilters.length - 1].connect(bassBoost);
+                eqFilters[eqFilters.length - 1].connect(loudnessGainNode);
+                loudnessGainNode.connect(bassBoost);
                 bassBoost.connect(lowpass);
                 lowpass.connect(highpass);
                 highpass.connect(stereoPanner);
