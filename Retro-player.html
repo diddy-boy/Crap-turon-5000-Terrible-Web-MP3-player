@@ -88,7 +88,6 @@
             </div>
         </div>
 
-        <!-- FM RADIO section inserted here -->
         <div class="section cd-transport">
             <div class="cd-panel" style="text-align: center;">
                 <label for="radioStation" class="button-effect">FM RADIO</label>
@@ -212,6 +211,7 @@
         const cassetteButton = document.getElementById('cassetteButton');
         const stereoWideButton = document.getElementById('stereoWideButton');
         const speedButton = document.getElementById('speedButton');
+        const eqSliders = document.querySelectorAll('.eq-slider');
 
         // Radio Element
         const radioStation = document.getElementById('radioStation');
@@ -236,6 +236,69 @@
         // Speed settings
         const speeds = [{ label: 'Normal', rate: 1.0 }, { label: '33rpm', rate: 0.55 }, { label: '45rpm', rate: 0.75 }, { label: '78rpm', rate: 1.3 }];
         let currentSpeedIndex = 0;
+
+        // ============================================
+        // LocalStorage Functions
+        // ============================================
+
+        function saveSettings() {
+            try {
+                const settings = {
+                    volume: volume,
+                    hyperBassOn: hyperbassButton.classList.contains('on'),
+                    equalizer: Array.from(eqSliders).map(slider => parseFloat(slider.value))
+                };
+                localStorage.setItem('crapTuronSettings', JSON.stringify(settings));
+            } catch (e) {
+                console.error('Failed to save settings to localStorage:', e);
+            }
+        }
+
+        function loadSettings() {
+            try {
+                const savedSettings = localStorage.getItem('crapTuronSettings');
+                if (savedSettings) {
+                    const settings = JSON.parse(savedSettings);
+
+                    // Restore volume
+                    volume = settings.volume;
+                    drawKnob();
+                    if (audioElement) {
+                        audioElement.volume = volume / 100;
+                    }
+
+                    // Restore Hyper Bass
+                    if (settings.hyperBassOn) {
+                        hyperbassButton.classList.add('on');
+                        hyperbassButton.textContent = 'Hyper Bass: ON';
+                        if (bassBoost) {
+                            bassBoost.gain.value = 5;
+                        }
+                    } else {
+                        hyperbassButton.classList.remove('on');
+                        hyperbassButton.textContent = 'Hyper Bass: OFF';
+                        if (bassBoost) {
+                            bassBoost.gain.value = 0;
+                        }
+                    }
+
+                    // Restore Equalizer bands
+                    const frequencies = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 12000];
+                    if (settings.equalizer && settings.equalizer.length === frequencies.length) {
+                        eqSliders.forEach((slider, index) => {
+                            const gainValue = settings.equalizer[index];
+                            slider.value = gainValue;
+                            if (eqFilters && eqFilters[index]) {
+                                eqFilters[index].gain.value = gainValue;
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to load settings from localStorage. Using defaults.', e);
+            }
+        }
+
 
         // ============================================
         // Full Radio Station List (Expanded)
@@ -627,6 +690,7 @@
             if (audioElement) { try { audioElement.volume = volume / 100; } catch (e) {} }
 
             drawKnob();
+            saveSettings();
         }
 
         knobCanvas.addEventListener('mousedown', (event) => { if (!isPoweredOn) return; isDragging = true; handleKnobInteraction(event); });
@@ -686,9 +750,12 @@
 
                 noiseSource.connect(noiseGainNode);
 
+                // Load settings here to apply saved EQ and Hyper Bass state
+                loadSettings();
+
                 // Setup EQ slider listeners with snap-to-center
                 const frequenciesArr = [31,62,125,250,500,1000,2000,4000,8000,12000];
-                document.querySelectorAll('.eq-slider').forEach(slider => {
+                eqSliders.forEach(slider => {
                     slider.addEventListener('input', () => {
                         if (!isPoweredOn) return;
                         const freq = parseFloat(slider.dataset.freq);
@@ -697,6 +764,7 @@
                             const value = parseFloat(slider.value);
                             if (Math.abs(value) < 1) slider.value = 0;
                             eqFilters[index].gain.value = parseFloat(slider.value);
+                            saveSettings();
                         }
                     });
                 });
@@ -736,7 +804,10 @@
                 if (!isPoweredOn) return;
                 const isOn = hyperbassButton.classList.toggle('on');
                 hyperbassButton.textContent = `Hyper Bass: ${isOn ? 'ON' : 'OFF'}`;
-                bassBoost.gain.value = isOn ? 5 : 0;
+                if (bassBoost) {
+                    bassBoost.gain.value = isOn ? 5 : 0;
+                }
+                saveSettings();
             });
 
             cassetteButton.addEventListener('click', () => {
@@ -1004,6 +1075,7 @@
         // ============================================
         resizeCanvas();
         hifiContainer.classList.add('off');
+        loadSettings(); // Initial load of settings
 
         // Kick off station checks once page loads
         window.addEventListener('load', () => {
