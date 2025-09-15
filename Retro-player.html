@@ -583,9 +583,10 @@
         }
 
         // ============================================
-        // Full Radio Station List (Same as original)
+        // Full Radio Station List
         // ============================================
-        const radioStations = [
+          const radioStations = [
+            // Hip Hop & R&B Stations
             {"name":"The Beat (181.fm, Hip Hop/R&B)","url":"http://listen.181fm.com/181-beat_128k.mp3"},
             {"name":"Underground 80s (SomaFM)","url":"https://ice5.somafm.com/u80s-128-mp3"},
             {"name":"Hot 108 Jamz (New York, Hip Hop)","url":"https://stream.hot108.com:8000/hot108"},
@@ -596,10 +597,109 @@
             {"name":"bigFM Oldschool Rap & Hip-Hop","url":"https://stream.bigfm.de/oldschool-rap"},
             {"name":"GotRadio - Hip Hop Stop","url":"http://playerservices.streamtheworld.com/api/livestream-redirect/GOTRADIO_HIPHOP_STOP.mp3"},
             {"name":"HipHop/RNB - HitsRadio","url":"http://icecast.radio.net/stream/hitsradio_hiphop.mp3"},
-            {"name":"SomaFM Beat Blender","url":"https://ice4.somafm.com/beatblender-128-mp3"},
-            {"name":"SomaFM Groove Salad","url":"https://ice4.somafm.com/groovesalad-128-mp3"},
+            {"name":"Black Beats (Germany, Hip Hop/R&B)","url":"http://stream.blackbeats.fm:8000/blackbeats"},
+            {"name":"True R'n'B (181.fm)","url":"http://listen.181fm.com/181-truernb_128k.mp3"},
+            
+            // 80s & Retro Stations
+            {"name":"70s Hits (181.fm)","url":"http://listen.181fm.com/181-70s_128k.mp3"},
+            {"name":"Oldies (181.fm)","url":"http://listen.181fm.com/181-oldies_128k.mp3"},
+            {"name":"Awesome 80s (181.fm)","url":"http://listen.181fm.com/181-awesome80_128k.mp3"},
+            {"name":"80s Hits - HitsRadio","url":"http://icecast.radio.net/stream/hitsradio_80s.mp3"},
+            {"name":"80s80s Rock (radio.net)","url":"http://icecast.radio.net/stream/80s80s_rock.mp3"},
+            {"name":"80s Dance Hits (HitsRadio)","url":"http://icecast.radio.net/stream/hitsradio_80sdance.mp3"},
+            {"name":"Big 80s Station (181.fm)","url":"http://listen.181fm.com/181-big80s_128k.mp3"},
+            {"name":"90s Hits (181.fm)","url":"http://listen.181fm.com/181-90s_128k.mp3"},
+            
+            // Rock & Alternative
+            {"name":"Rock 181 (181.fm)","url":"http://listen.181fm.com/181-rock_128k.mp3"},
+            {"name":"Classic Rock (181.fm)","url":"http://listen.181fm.com/181-classicrock_128k.mp3"},
+            {"name":"Alternative Rock (181.fm)","url":"http://listen.181fm.com/181-altrock_128k.mp3"},
+            {"name":"Hard Rock Heaven (181.fm)","url":"http://listen.181fm.com/181-hardrock_128k.mp3"},
+            {"name":"Punk Rock (181.fm)","url":"http://listen.181fm.com/181-punk_128k.mp3"},
+            {"name":"Grunge (181.fm)","url":"http://listen.181fm.com/181-grunge_128k.mp3"},
+            
+            // Electronic & Dance
+            {"name":"Power 181 (Dance/Electronic)","url":"http://listen.181fm.com/181-power_128k.mp3"},
+            {"name":"Club 181 (House/Techno)","url":"http://listen.181fm.com/181-club_128k.mp3"},
+            {"name":"Energy 98 (181.fm, Trance)","url":"http://listen.181fm.com/181-energy98_128k.mp3"},
+            {"name":"Techno 181","url":"http://listen.181fm.com/181-techno_128k.mp3"},
+            {"name":"The Buzz (Alternative Rock)","url":"http://listen.181fm.com/181-buzz_128k.mp3"},
+            {"name":"90s Dance (181.fm)","url":"http://listen.181fm.com/181-90sdance_128k.mp3"},
+                        
+            // Top 40 & Pop
+            {"name":"Hot Hits USA (181.fm)","url":"http://listen.181fm.com/181-hothitsusa_128k.mp3"},
+            {"name":"Top 40 (181.fm)","url":"http://listen.181fm.com/181-top40_128k.mp3"},
+            {"name":"The Hits (181.fm)","url":"http://listen.181fm.com/181-hits_128k.mp3"},
+            {"name":"Star 90s (181.fm)","url":"http://listen.181fm.com/181-star90s_128k.mp3"},
+            {"name":"Laser Hot Hits","url":"http://213.175.217.198:8000/laserhq"},
+            
+            // Country & Folk
+            {"name":"Kickin' Country (181.fm)","url":"http://listen.181fm.com/181-kickincountry_128k.mp3"},
+            {"name":"Real Country (181.fm)","url":"http://listen.181fm.com/181-realcountry_128k.mp3"},
+            {"name":"Good Time Oldies (181.fm)","url":"http://listen.181fm.com/181-goodtime_128k.mp3"},
+            
+            // Jazz & Blues
+            {"name":"Real Jazz (181.fm)","url":"http://listen.181fm.com/181-jazz_128k.mp3"},
+            {"name":"Smooth Jazz (181.fm)","url":"http://listen.181fm.com/181-smoothjazz_128k.mp3"},
+            {"name":"The Blues (181.fm)","url":"http://listen.181fm.com/181-blues_128k.mp3"},
+            {"name":"Linn Jazz","url":"http://radio.linn.co.uk:8000/autodj"},
+            {"name":"Naim Jazz [320k AAC]","url":"https://mscp3.live-streams.nl:8342/jazz-high.aac"},
+            
+            // Classical
+            {"name":"Classical 181","url":"http://listen.181fm.com/181-classical_128k.mp3"},
+            {"name":"Linn Classical","url":"http://radio.linn.co.uk:8004/autodj"},
+            {"name":"Naim Classical [320k AAC]","url":"https://mscp3.live-streams.nl:8252/class-high.aac"},
+            
+            // Reggae & World
+            {"name":"Joint Radio Reggae","url":"http://star.jointil.net/proxy/jrn_reggae?mp=/stream"},
+            {"name":"Reggae 141 (181.fm)","url":"http://listen.181fm.com/181-reggae_128k.mp3"},
+            {"name":"Radio Alfa 3 Latin Hits","url":"http://stream.zeno.fm/pexep60uhnruv"},
+            
+            // Chillout & Ambient
+            {"name":"Chilled (181.fm)","url":"http://listen.181fm.com/181-chilled_128k.mp3"},
+            {"name":"Ambient (181.fm)","url":"http://listen.181fm.com/181-ambient_128k.mp3"},
             {"name":"Radio Paradise (320k)","url":"http://stream-uk1.radioparadise.com/aac-320"},
-            {"name":"Classic Rock (181.fm)","url":"http://listen.181fm.com/181-classicrock_128k.mp3"}
+            {"name":"Deep House Lounge","url":"http://198.15.94.34:8006/stream"},
+            {"name":"Naim Radio [320k AAC]","url":"https://mscp3.live-streams.nl:8362/high.aac"},
+            {"name":"Linn Radio","url":"http://radio.linn.co.uk:8003/autodj"},
+            
+            // Additional 181.fm Stations
+            {"name":"Studio 181 (Eclectic)","url":"http://listen.181fm.com/181-studio_128k.mp3"},
+            {"name":"Vocal Jazz (181.fm)","url":"http://listen.181fm.com/181-vocaljazz_128k.mp3"},
+            {"name":"Soft Hits (181.fm)","url":"http://listen.181fm.com/181-softhits_128k.mp3"},
+            {"name":"Urban Jamz (181.fm)","url":"http://listen.181fm.com/181-urbanjamz_128k.mp3"},
+            {"name":"Christmas 181 (Seasonal)","url":"http://listen.181fm.com/181-christmas_128k.mp3"},
+            {"name":"Halloween 181 (Seasonal)","url":"http://listen.181fm.com/181-halloween_128k.mp3"},
+            
+            // SomaFM Network (High Quality Alternative)
+            {"name":"SomaFM Beat Blender","url":"https://ice4.somafm.com/beatblender-128-mp3"},
+            {"name":"SomaFM Deep Space One","url":"https://ice4.somafm.com/deepspaceone-128-mp3"},
+            {"name":"SomaFM Drone Zone","url":"https://ice4.somafm.com/dronezone-128-mp3"},
+            {"name":"SomaFM Fluid","url":"https://ice4.somafm.com/fluid-128-mp3"},
+            {"name":"SomaFM Indie Pop Rocks!","url":"https://ice4.somafm.com/indiepop-128-mp3"},
+            {"name":"SomaFM Groove Salad","url":"https://ice4.somafm.com/groovesalad-128-mp3"},
+            {"name":"SomaFM Lush","url":"https://ice4.somafm.com/lush-128-mp3"},
+            {"name":"SomaFM Left Coast 70s","url":"https://ice4.somafm.com/seventies-128-mp3"},
+            {"name":"SomaFM PopTron","url":"https://ice4.somafm.com/poptron-128-mp3"},
+            {"name":"SomaFM Suburbs of Goa","url":"https://ice4.somafm.com/suburbsofgoa-128-mp3"},
+            {"name":"SomaFM ThistleRadio","url":"https://ice4.somafm.com/thistleradio-128-mp3"},
+            
+            // Talk & News
+            {"name":"The Breeze (181.fm)","url":"http://listen.181fm.com/181-breeze_128k.mp3"},
+            {"name":"Smooth AC (181.fm)","url":"http://listen.181fm.com/181-smoothac_128k.mp3"},
+            
+            // Specialty & Experimental
+            {"name":"Angel Radio","url":"http://s2.xrad.io:8522/listen.pls?sid=1"},
+            {"name":"181.fm The Point","url":"http://listen.181fm.com/181-thepoint_128k.mp3"},
+            {"name":"181.fm The Mix","url":"http://listen.181fm.com/181-themix_128k.mp3"},
+            
+            // International & World Music
+            {"name":"Radio Caroline","url":"http://sc6.radiocaroline.net:8040/stream.mp3"},
+            {"name":"Radio Caroline Flashback","url":"http://sc2.radiocaroline.net:10558/listen.pls"},
+            {"name":"Radio Northsea International","url":"http://radionorthsea.zapto.org:8008/listen.pls"},
+            {"name":"Radio Seagull","url":"http://stream.radioseagull.net:8000/seagull"},
+            {"name":"Danubius Rádió","url":"http://stream.danubiusradio.hu/danubius_128k"},
+            {"name":"Radio Osttirol","url":"http://streamplus20.leonex.de:28768/;"}
         ];
 
         // ============================================
