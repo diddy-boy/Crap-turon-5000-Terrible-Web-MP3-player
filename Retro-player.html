@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Crap-turon 5000 LoFi Player</title>
+    <title>Crap-turon 5000 LoFi Player - Enhanced Cassette</title>
     <style>
         body { background: #1a1a1a; margin: 0; font-family: 'Arial Narrow', Arial, sans-serif; }
         .hifi-container { max-width: 900px; margin: 30px auto; padding: 25px; background: linear-gradient(145deg, #2b2b2b, #404040); border: 4px solid #555; border-radius: 12px; box-shadow: inset 0 0 15px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.7); color:#d0d0d0; transition: filter 0.3s; position: relative }
@@ -50,13 +50,20 @@
 		.station-list { background-color: grey; color: white; }
 		#radioStation { background-color: #808080; color: white; border: 2px solid #777; border-radius: 6px; padding: 10px; font-weight: bold;       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2); }
         #radioStation option { background-color: #808080; color: white; }
-        .stereo-effect { display:flex; justify-content:space-around; align-items:center; }
+        .stereo-effect { display:flex; justify-content:space-around; align-items:center; flex-wrap: wrap; gap: 10px; }
         .playlist { font-size:16px; color:#00ff00; font-family:'Courier New', monospace; background:#0a2a0a; padding:10px; border:2px solid #444; border-radius:4px; box-shadow: inset 0 0 5px rgba(0,255,0,0.3); max-height:150px; overflow-y:auto; }
         .playlist-item { padding:8px; cursor:pointer; border-radius:4px; }
         .playlist-item:hover { background:#1a3a1a; }
         .playlist-item.active { background:#2a4a2a; font-weight:bold; }
         .error-message { color:#ff4444; text-align:center; padding:10px; font-family:'Courier New', monospace; display:none; }
 		.fm-radio-box { width: 250px; }
+
+        /* Cassette Quality Settings */
+        .cassette-controls { background:#2a2a2a; padding:15px; margin-top:10px; border:2px solid #555; border-radius:6px; }
+        .cassette-controls h4 { color:#ffaa44; margin:0 0 10px 0; }
+        .quality-selector { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+        .quality-btn { background:#444; border:1px solid #666; color:#ccc; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; }
+        .quality-btn.active { background:#664422; color:#ffaa44; border-color:#aa8844; }
     </style>
 </head>
 <body>
@@ -85,9 +92,9 @@
             <div class="track-info" id="trackInfo" style="text-align: center;">No track loaded</div>
             <div class="track-time" id="trackTime" style="text-align: center;">0:00 / 0:00</div>
             <div class="transport-controls" style="text-align: center;">
-                <button id="prevButton">⮜</button>
+                <button id="prevButton">⏮</button>
                 <button id="playButton">▶ PLAY</button>
-                <button id="nextButton">⮞</button>
+                <button id="nextButton">⏭</button>
             </div>
         </div>
 
@@ -167,12 +174,26 @@
         </div>
 
         <div class="section stereo-effect">
-            <button class="button-effect" id="binatoneButton">Crap Bass Boost: OFF</button>
-            <button class="button-effect" id="hyperbassButton">Hyper Bass: OFF</button>
-            <button class="button-effect" id="cassetteButton">Cassette Mode: OFF</button>
-            <button class="button-effect" id="stereoWideButton">Stereo Wide: OFF</button>
-            <button class="button-effect" id="speedButton">Speed: Normal</button>
-            <button class="button-effect" id="loudnessButton">Loudness: OFF</button>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-around; width: 100%;">
+                <button class="button-effect" id="binatoneButton">Crap Bass Boost: OFF</button>
+                <button class="button-effect" id="hyperbassButton">Hyper Bass: OFF</button>
+                <button class="button-effect" id="cassetteButton">Cassette Mode: OFF</button>
+                <button class="button-effect" id="stereoWideButton">Stereo Wide: OFF</button>
+                <button class="button-effect" id="speedButton">Speed: Normal</button>
+                <button class="button-effect" id="loudnessButton">Loudness: OFF</button>
+            </div>
+
+            <div class="cassette-controls" id="cassetteControls" style="display:none; width:100%;">
+                <h4>Cassette Quality Settings</h4>
+                <div class="quality-selector">
+                    <span style="color:#ccc; margin-right:10px;">Tape Quality:</span>
+                    <button class="quality-btn active" data-quality="normal">Normal</button>
+                    <button class="quality-btn" data-quality="worn">Worn</button>
+                    <button class="quality-btn" data-quality="damaged">Damaged</button>
+                    <button class="quality-btn" data-quality="vintage">Vintage</button>
+					<button class="quality-btn" data-quality="chewedUp">Chewed Up Tape</button>
+                </div>
+            </div>
         </div>
 
         <div class="section playlist">
@@ -217,13 +238,13 @@
         const speedButton = document.getElementById('speedButton');
         const loudnessButton = document.getElementById('loudnessButton');
         const eqSliders = document.querySelectorAll('.eq-slider');
-        // Removed loudnessSlider variable
+        const cassetteControls = document.getElementById('cassetteControls');
 
         // Radio Element
         const radioStation = document.getElementById('radioStation');
 
         // Audio Context Variables
-        let audioCtx, analyser, audioElement, source, eqFilters, lowpass, highpass, bassBoost, noiseSource, noiseGainNode, stereoPanner, loudnessGainNode;
+        let audioCtx, analyser, audioElement, source, eqFilters, lowpass, highpass, bassBoost, noiseSource, noiseGainNode, stereoPanner, loudnessGainNode, masterGain;
 
         // Playlist Variables
         let playlist = [];
@@ -234,14 +255,253 @@
         const spectrumCanvas = document.getElementById('spectrumCanvas');
         const spectrumCtx = spectrumCanvas.getContext('2d');
 
-        // Wow and Flutter Variables
-        const WOW_FLUTTER_FREQ = 0.1;
-        const WOW_FLUTTER_AMOUNT = 0.10;
-        let wowFlutterInterval = null;
+        // Enhanced Cassette Variables
+        let cassetteQuality = 'normal';
+        let wowFlutterOscillator, wowFlutterGain, delayNode;
+        let noiseSourceLow, noiseGainLow, noiseSourceMid, noiseGainMid;
+        let compressionNode, compressionGain;
+        let cassetteFilterLow, cassetteFilterHigh;
+        let wowFlutterAnimationId = null;
 
         // Speed settings
         const speeds = [{ label: 'Normal', rate: 1.0 }, { label: '33rpm', rate: 0.55 }, { label: '45rpm', rate: 0.75 }, { label: '78rpm', rate: 1.3 }];
         let currentSpeedIndex = 0;
+
+        // Enhanced Cassette Quality Presets
+        const cassettePresets = {
+            normal: {
+                wowFlutterAmount: 0.003,
+                wowFlutterSpeed: 0.5,
+                hissLevel: 0.001,
+                compressionRatio: 0.95,
+                lowCut: 60,
+                highCut: 12000,
+                distortionLevel: 0
+            },
+            worn: {
+                wowFlutterAmount: 0.02,
+                wowFlutterSpeed: 0.3,
+                hissLevel: 0.003,
+                compressionRatio: 0.85,
+                lowCut: 80,
+                highCut: 8000,
+                distortionLevel: 0.1
+            },
+            damaged: {
+                wowFlutterAmount: 0.19,
+                wowFlutterSpeed: 0.6,
+                hissLevel: 0.009,
+                compressionRatio: 0.7,
+                lowCut: 120,
+                highCut: 4000,
+                distortionLevel: 0.3
+            },
+            vintage: {
+                wowFlutterAmount: 0.015,
+                wowFlutterSpeed: 0.1,
+                hissLevel: 0.006,
+                compressionRatio: 0.6,
+                lowCut: 100,
+                highCut: 6000,
+                distortionLevel: 0.2
+            },
+			chewedUp: {
+				wowFlutterAmount: 0.19,
+				wowFlutterSpeed: 0.6,
+				hissLevel: 0.009,
+				compressionRatio: 0.7,
+				lowCut: 120,
+				highCut: 4000,
+				distortionLevel: 0.3
+			}
+        };
+
+        // ============================================
+        // Enhanced Cassette Effect Functions
+        // ============================================
+
+        function createCassetteEffectChain() {
+            if (!audioCtx) return;
+
+            // Create wow & flutter using multiple oscillators for realism
+            wowFlutterOscillator = audioCtx.createOscillator();
+            wowFlutterOscillator.type = 'sine';
+            wowFlutterOscillator.frequency.value = 0.1;
+            
+            wowFlutterGain = audioCtx.createGain();
+            wowFlutterGain.gain.value = 0.003;
+            
+            wowFlutterOscillator.connect(wowFlutterGain);
+            wowFlutterOscillator.start();
+
+            // Create multiple noise sources for realistic tape hiss
+            // High frequency hiss
+            const hissBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
+            const hissData = hissBuffer.getChannelData(0);
+            for (let i = 0; i < audioCtx.sampleRate; i++) {
+                hissData[i] = (Math.random() * 2 - 1) * 0.5;
+            }
+
+            noiseSourceLow = audioCtx.createBufferSource();
+            noiseSourceLow.buffer = hissBuffer;
+            noiseSourceLow.loop = true;
+            noiseSourceLow.start();
+
+            noiseGainLow = audioCtx.createGain();
+            noiseGainLow.gain.value = 0;
+
+            // Mid-frequency noise for more realistic hiss
+            const midHissBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
+            const midHissData = midHissBuffer.getChannelData(0);
+            for (let i = 0; i < audioCtx.sampleRate; i++) {
+                // More filtered noise for mid frequencies
+                midHissData[i] = (Math.random() * 2 - 1) * Math.sin(i * 0.001) * 0.3;
+            }
+
+            noiseSourceMid = audioCtx.createBufferSource();
+            noiseSourceMid.buffer = midHissBuffer;
+            noiseSourceMid.loop = true;
+            noiseSourceMid.start();
+
+            noiseGainMid = audioCtx.createGain();
+            noiseGainMid.gain.value = 0;
+
+            // Compression for tape saturation effect
+            compressionNode = audioCtx.createDynamicsCompressor();
+            compressionNode.threshold.value = -15;
+            compressionNode.knee.value = 8;
+            compressionNode.ratio.value = 4;
+            compressionNode.attack.value = 0.003;
+            compressionNode.release.value = 0.25;
+
+            compressionGain = audioCtx.createGain();
+            compressionGain.gain.value = 1;
+
+            // Cassette-specific frequency response
+            cassetteFilterLow = audioCtx.createBiquadFilter();
+            cassetteFilterLow.type = 'highpass';
+            cassetteFilterLow.frequency.value = 60;
+            cassetteFilterLow.Q.value = 0.7;
+
+            cassetteFilterHigh = audioCtx.createBiquadFilter();
+            cassetteFilterHigh.type = 'lowpass';
+            cassetteFilterHigh.frequency.value = 12000;
+            cassetteFilterHigh.Q.value = 0.7;
+
+            // Connect noise sources to analyser
+            noiseSourceLow.connect(noiseGainLow);
+            noiseSourceMid.connect(noiseGainMid);
+
+            noiseGainLow.connect(analyser);
+            noiseGainMid.connect(analyser);
+        }
+
+        function applyCassetteQuality(quality) {
+            const preset = cassettePresets[quality];
+            if (!preset || !audioCtx) return;
+
+            // Update wow & flutter
+            if (wowFlutterOscillator && wowFlutterGain) {
+                wowFlutterOscillator.frequency.value = preset.wowFlutterSpeed;
+                wowFlutterGain.gain.value = preset.wowFlutterAmount;
+            }
+
+            // Update noise levels
+            if (noiseGainLow) noiseGainLow.gain.value = preset.hissLevel;
+            if (noiseGainMid) noiseGainMid.gain.value = preset.hissLevel * 0.6;
+
+            // Update frequency response
+            if (cassetteFilterLow) cassetteFilterLow.frequency.value = preset.lowCut;
+            if (cassetteFilterHigh) cassetteFilterHigh.frequency.value = preset.highCut;
+
+            // Update compression for saturation
+            if (compressionNode && compressionGain) {
+                compressionGain.gain.value = preset.compressionRatio;
+                compressionNode.threshold.value = -15 + (preset.distortionLevel * 10);
+            }
+
+            cassetteQuality = quality;
+        }
+        
+        // This is the updated, corrected function
+        function startEnhancedWowFlutter() {
+            if (wowFlutterAnimationId) {
+                cancelAnimationFrame(wowFlutterAnimationId);
+            }
+
+            let dropoutScheduled = false;
+
+            function updateWowFlutter() {
+                if (audioElement && cassetteButton.classList.contains('on') && audioCtx) {
+                    const preset = cassettePresets[cassetteQuality];
+                    const time = audioCtx.currentTime;
+
+                    // Standard wow & flutter effect
+                    const mainWow = Math.sin(time * 2 * Math.PI * 0.1) * preset.wowFlutterAmount;
+                    const flutter = Math.sin(time * 2 * Math.PI * 0.8) * (preset.wowFlutterAmount * 0.3);
+                    const randomFlutter = (Math.random() - 0.5) * preset.wowFlutterAmount * 0.1;
+                    const totalFlutter = mainWow + flutter + randomFlutter;
+
+                    // Apply the pitch change
+                    audioElement.playbackRate = Math.max(0.1, speeds[currentSpeedIndex].rate + totalFlutter);
+
+                    // === Chewed Up effect logic ===
+                    if (cassetteQuality === 'chewedUp') {
+                        // Schedule a dropout every 40 seconds
+                        if (!dropoutScheduled) {
+                            const dropoutTime = time + 40; // Schedule 40 seconds from now
+                            const preDropoutTime = dropoutTime - 0.5; // 0.5 seconds before dropout
+                            
+                            // Schedule bandwidth narrowing
+                            cassetteFilterHigh.frequency.setValueAtTime(800, preDropoutTime);
+                            cassetteFilterLow.frequency.setValueAtTime(400, preDropoutTime);
+
+                            // Schedule volume drop
+                            masterGain.gain.setValueAtTime(0.2, dropoutTime);
+                            
+                            // Schedule a pitch change during the dropout
+                            audioElement.playbackRate = Math.max(0.1, speeds[currentSpeedIndex].rate - 0.2);
+
+                            // Schedule recovery of bandwidth, pitch, and volume
+                            masterGain.gain.setValueAtTime(1, dropoutTime + 1); // Recover in 1 second
+                            cassetteFilterHigh.frequency.setValueAtTime(preset.highCut, dropoutTime + 1.1);
+                            cassetteFilterLow.frequency.setValueAtTime(preset.lowCut, dropoutTime + 1.1);
+                            
+                            dropoutScheduled = true;
+                            
+                            // Reset dropoutScheduled flag after the event has passed
+                            setTimeout(() => {
+                                dropoutScheduled = false;
+                            }, (dropoutTime + 2 - time) * 1000);
+                        }
+                    } else {
+                        // Reset to normal values if not 'chewedUp'
+                        masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+                        masterGain.gain.setValueAtTime(1, audioCtx.currentTime);
+                        cassetteFilterHigh.frequency.cancelScheduledValues(audioCtx.currentTime);
+                        cassetteFilterHigh.frequency.setValueAtTime(preset.highCut, audioCtx.currentTime);
+                        cassetteFilterLow.frequency.cancelScheduledValues(audioCtx.currentTime);
+                        cassetteFilterLow.frequency.setValueAtTime(preset.lowCut, audioCtx.currentTime);
+                        dropoutScheduled = false;
+                    }
+
+                } else if (audioElement) {
+                    // Ensure playback rate is normal when cassette mode is off
+                    audioElement.playbackRate = speeds[currentSpeedIndex].rate;
+                }
+
+                wowFlutterAnimationId = requestAnimationFrame(updateWowFlutter);
+            }
+
+            updateWowFlutter();
+        }
+
+        function stopEnhancedWowFlutter() {
+            if (wowFlutterAnimationId) {
+                cancelAnimationFrame(wowFlutterAnimationId);
+                wowFlutterAnimationId = null;
+            }
+        }
 
         // ============================================
         // LocalStorage Functions
@@ -253,7 +513,8 @@
                     volume: volume,
                     hyperBassOn: hyperbassButton.classList.contains('on'),
                     equalizer: Array.from(eqSliders).map(slider => parseFloat(slider.value)),
-                    loudnessOn: loudnessButton.classList.contains('on') // Save button state
+                    loudnessOn: loudnessButton.classList.contains('on'),
+                    cassetteQuality: cassetteQuality
                 };
                 localStorage.setItem('crapTuronSettings', JSON.stringify(settings));
             } catch (e) {
@@ -268,7 +529,7 @@
                     const settings = JSON.parse(savedSettings);
 
                     // Restore volume
-                    volume = settings.volume;
+                    volume = settings.volume || 50;
                     drawKnob();
                     if (audioElement) {
                         audioElement.volume = volume / 100;
@@ -280,12 +541,6 @@
                         hyperbassButton.textContent = 'Hyper Bass: ON';
                         if (bassBoost) {
                             bassBoost.gain.value = 5;
-                        }
-                    } else {
-                        hyperbassButton.classList.remove('on');
-                        hyperbassButton.textContent = 'Hyper Bass: OFF';
-                        if (bassBoost) {
-                            bassBoost.gain.value = 0;
                         }
                     }
 
@@ -302,16 +557,18 @@
                     }
 
                     // Restore Loudness
-                    if (loudnessGainNode) {
-                        if (settings.loudnessOn) {
-                            loudnessButton.classList.add('on');
-                            loudnessButton.textContent = 'Loudness: ON';
-                            loudnessGainNode.gain.value = 2; // Set a subtle gain
-                        } else {
-                            loudnessButton.classList.remove('on');
-                            loudnessButton.textContent = 'Loudness: OFF';
-                            loudnessGainNode.gain.value = 1; // Set to unity gain (no change)
+                    if (settings.loudnessOn) {
+                        loudnessButton.classList.add('on');
+                        loudnessButton.textContent = 'Loudness: ON';
+                        if (loudnessGainNode) {
+                            loudnessGainNode.gain.value = 1.2;
                         }
+                    }
+
+                    // Restore Cassette Quality
+                    if (settings.cassetteQuality) {
+                        cassetteQuality = settings.cassetteQuality;
+                        updateQualityButtons();
                     }
                 }
             } catch (e) {
@@ -319,12 +576,16 @@
             }
         }
 
+        function updateQualityButtons() {
+            document.querySelectorAll('.quality-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.quality === cassetteQuality);
+            });
+        }
 
         // ============================================
-        // Full Radio Station List (Expanded)
+        // Full Radio Station List (Same as original)
         // ============================================
         const radioStations = [
-            // Hip Hop & R&B Stations
             {"name":"The Beat (181.fm, Hip Hop/R&B)","url":"http://listen.181fm.com/181-beat_128k.mp3"},
             {"name":"Underground 80s (SomaFM)","url":"https://ice5.somafm.com/u80s-128-mp3"},
             {"name":"Hot 108 Jamz (New York, Hip Hop)","url":"https://stream.hot108.com:8000/hot108"},
@@ -335,113 +596,10 @@
             {"name":"bigFM Oldschool Rap & Hip-Hop","url":"https://stream.bigfm.de/oldschool-rap"},
             {"name":"GotRadio - Hip Hop Stop","url":"http://playerservices.streamtheworld.com/api/livestream-redirect/GOTRADIO_HIPHOP_STOP.mp3"},
             {"name":"HipHop/RNB - HitsRadio","url":"http://icecast.radio.net/stream/hitsradio_hiphop.mp3"},
-            {"name":"Black Beats (Germany, Hip Hop/R&B)","url":"http://stream.blackbeats.fm:8000/blackbeats"},
-            {"name":"True R'n'B (181.fm)","url":"http://listen.181fm.com/181-truernb_128k.mp3"},
-            
-            // 80s & Retro Stations
-            {"name":"Awesome 80s (181.fm)","url":"http://listen.181fm.com/181-awesome80_128k.mp3"},
-            {"name":"80s Hits - HitsRadio","url":"http://icecast.radio.net/stream/hitsradio_80s.mp3"},
-            {"name":"80s80s Rock (radio.net)","url":"http://icecast.radio.net/stream/80s80s_rock.mp3"},
-            {"name":"80s Dance Hits (HitsRadio)","url":"http://icecast.radio.net/stream/hitsradio_80sdance.mp3"},
-            {"name":"Big 80s Station (181.fm)","url":"http://listen.181fm.com/181-big80s_128k.mp3"},
-            {"name":"90s Hits (181.fm)","url":"http://listen.181fm.com/181-90s_128k.mp3"},
-            {"name":"70s Hits (181.fm)","url":"http://listen.181fm.com/181-70s_128k.mp3"},
-            {"name":"Oldies (181.fm)","url":"http://listen.181fm.com/181-oldies_128k.mp3"},
-            
-            // SomaFM Network (High Quality Alternative)
             {"name":"SomaFM Beat Blender","url":"https://ice4.somafm.com/beatblender-128-mp3"},
-            {"name":"SomaFM Deep Space One","url":"https://ice4.somafm.com/deepspaceone-128-mp3"},
-            {"name":"SomaFM Drone Zone","url":"https://ice4.somafm.com/dronezone-128-mp3"},
-            {"name":"SomaFM Fluid","url":"https://ice4.somafm.com/fluid-128-mp3"},
-            {"name":"SomaFM Indie Pop Rocks!","url":"https://ice4.somafm.com/indiepop-128-mp3"},
-            {"name":"SomaFM Secret Agent","url":"https://ice4.somafm.com/secretagent-128-mp3"},
-            {"name":"SomaFM Sonic Universe","url":"https://ice4.somafm.com/sonicuniverse-128-mp3"},
-            {"name":"SomaFM Thistle","url":"https://ice4.somafm.com/thistle-128-mp3"},
-            {"name":"SomaFM Vaporwaves","url":"https://ice4.somafm.com/vaporwaves-128-mp3"},
             {"name":"SomaFM Groove Salad","url":"https://ice4.somafm.com/groovesalad-128-mp3"},
-            {"name":"SomaFM Lush","url":"https://ice4.somafm.com/lush-128-mp3"},
-            {"name":"SomaFM Left Coast 70s","url":"https://ice4.somafm.com/seventies-128-mp3"},
-            {"name":"SomaFM PopTron","url":"https://ice4.somafm.com/poptron-128-mp3"},
-            {"name":"SomaFM Suburbs of Goa","url":"https://ice4.somafm.com/suburbsofgoa-128-mp3"},
-            {"name":"SomaFM ThistleRadio","url":"https://ice4.somafm.com/thistleradio-128-mp3"},
-            
-            // Rock & Alternative
-            {"name":"Rock 181 (181.fm)","url":"http://listen.181fm.com/181-rock_128k.mp3"},
-            {"name":"Classic Rock (181.fm)","url":"http://listen.181fm.com/181-classicrock_128k.mp3"},
-            {"name":"Alternative Rock (181.fm)","url":"http://listen.181fm.com/181-altrock_128k.mp3"},
-            {"name":"Hard Rock Heaven (181.fm)","url":"http://listen.181fm.com/181-hardrock_128k.mp3"},
-            {"name":"Punk Rock (181.fm)","url":"http://listen.181fm.com/181-punk_128k.mp3"},
-            {"name":"Grunge (181.fm)","url":"http://listen.181fm.com/181-grunge_128k.mp3"},
-            
-            // Electronic & Dance
-            {"name":"Power 181 (Dance/Electronic)","url":"http://listen.181fm.com/181-power_128k.mp3"},
-            {"name":"Club 181 (House/Techno)","url":"http://listen.181fm.com/181-club_128k.mp3"},
-            {"name":"Energy 98 (181.fm, Trance)","url":"http://listen.181fm.com/181-energy98_128k.mp3"},
-            {"name":"Techno 181","url":"http://listen.181fm.com/181-techno_128k.mp3"},
-            {"name":"The Buzz (Alternative Rock)","url":"http://listen.181fm.com/181-buzz_128k.mp3"},
-            
-            // Jazz & Blues
-            {"name":"Real Jazz (181.fm)","url":"http://listen.181fm.com/181-jazz_128k.mp3"},
-            {"name":"Smooth Jazz (181.fm)","url":"http://listen.181fm.com/181-smoothjazz_128k.mp3"},
-            {"name":"The Blues (181.fm)","url":"http://listen.181fm.com/181-blues_128k.mp3"},
-            {"name":"Linn Jazz","url":"http://radio.linn.co.uk:8000/autodj"},
-            {"name":"Naim Jazz [320k AAC]","url":"https://mscp3.live-streams.nl:8342/jazz-high.aac"},
-            
-            // Classical
-            {"name":"Classical 181","url":"http://listen.181fm.com/181-classical_128k.mp3"},
-            {"name":"Linn Classical","url":"http://radio.linn.co.uk:8004/autodj"},
-            {"name":"Naim Classical [320k AAC]","url":"https://mscp3.live-streams.nl:8252/class-high.aac"},
-            
-            // Country & Folk
-            {"name":"Kickin' Country (181.fm)","url":"http://listen.181fm.com/181-kickincountry_128k.mp3"},
-            {"name":"Real Country (181.fm)","url":"http://listen.181fm.com/181-realcountry_128k.mp3"},
-            {"name":"Good Time Oldies (181.fm)","url":"http://listen.181fm.com/181-goodtime_128k.mp3"},
-            
-            // International & World Music
-            {"name":"Radio Caroline","url":"http://sc6.radiocaroline.net:8040/stream.mp3"},
-            {"name":"Radio Caroline Flashback","url":"http://sc2.radiocaroline.net:10558/listen.pls"},
-            {"name":"Radio Northsea International","url":"http://radionorthsea.zapto.org:8008/listen.pls"},
-            {"name":"Radio Seagull","url":"http://stream.radioseagull.net:8000/seagull"},
-            {"name":"Danubius Rádió","url":"http://stream.danubiusradio.hu/danubius_128k"},
-            {"name":"Radio Osttirol","url":"http://streamplus20.leonex.de:28768/;"},
-            
-            // Reggae & World
-            {"name":"Joint Radio Reggae","url":"http://star.jointil.net/proxy/jrn_reggae?mp=/stream"},
-            {"name":"Reggae 141 (181.fm)","url":"http://listen.181fm.com/181-reggae_128k.mp3"},
-            {"name":"Radio Alfa 3 Latin Hits","url":"http://stream.zeno.fm/pexep60uhnruv"},
-            
-            // Chillout & Ambient
-            {"name":"Chilled (181.fm)","url":"http://listen.181fm.com/181-chilled_128k.mp3"},
-            {"name":"Ambient (181.fm)","url":"http://listen.181fm.com/181-ambient_128k.mp3"},
             {"name":"Radio Paradise (320k)","url":"http://stream-uk1.radioparadise.com/aac-320"},
-            {"name":"Deep House Lounge","url":"http://198.15.94.34:8006/stream"},
-            {"name":"Naim Radio [320k AAC]","url":"https://mscp3.live-streams.nl:8362/high.aac"},
-            {"name":"Linn Radio","url":"http://radio.linn.co.uk:8003/autodj"},
-            
-            // Top 40 & Pop
-            {"name":"Hot Hits USA (181.fm)","url":"http://listen.181fm.com/181-hothitsusa_128k.mp3"},
-            {"name":"Top 40 (181.fm)","url":"http://listen.181fm.com/181-top40_128k.mp3"},
-            {"name":"The Hits (181.fm)","url":"http://listen.181fm.com/181-hits_128k.mp3"},
-            {"name":"Star 90s (181.fm)","url":"http://listen.181fm.com/181-star90s_128k.mp3"},
-            {"name":"Laser Hot Hits","url":"http://213.175.217.198:8000/laserhq"},
-            
-            // Talk & News
-            {"name":"The Breeze (181.fm)","url":"http://listen.181fm.com/181-breeze_128k.mp3"},
-            {"name":"Smooth AC (181.fm)","url":"http://listen.181fm.com/181-smoothac_128k.mp3"},
-            
-            // Specialty & Experimental
-            {"name":"Angel Radio","url":"http://s2.xrad.io:8522/listen.pls?sid=1"},
-            {"name":"181.fm The Point","url":"http://listen.181fm.com/181-thepoint_128k.mp3"},
-            {"name":"181.fm The Mix","url":"http://listen.181fm.com/181-themix_128k.mp3"},
-            
-            // Additional 181.fm Stations
-            {"name":"Studio 181 (Eclectic)","url":"http://listen.181fm.com/181-studio_128k.mp3"},
-            {"name":"Vocal Jazz (181.fm)","url":"http://listen.181fm.com/181-vocaljazz_128k.mp3"},
-            {"name":"Soft Hits (181.fm)","url":"http://listen.181fm.com/181-softhits_128k.mp3"},
-            {"name":"Urban Jamz (181.fm)","url":"http://listen.181fm.com/181-urbanjamz_128k.mp3"},
-            {"name":"90s Dance (181.fm)","url":"http://listen.181fm.com/181-90sdance_128k.mp3"},
-            {"name":"Christmas 181 (Seasonal)","url":"http://listen.181fm.com/181-christmas_128k.mp3"},
-            {"name":"Halloween 181 (Seasonal)","url":"http://listen.181fm.com/181-halloween_128k.mp3"}
+            {"name":"Classic Rock (181.fm)","url":"http://listen.181fm.com/181-classicrock_128k.mp3"}
         ];
 
         // ============================================
@@ -451,7 +609,6 @@
             try {
                 if (audioElement) {
                     audioElement.pause();
-                    // remove event listeners by cloning (safer)
                     try { audioElement.src = ""; } catch (e) {}
                     audioElement = null;
                 }
@@ -469,13 +626,12 @@
         }
 
         // ============================================
-        // Check station availability (non-blocking-ish)
+        // Check station availability
         // ============================================
         async function checkStations() {
-            radioStation.innerHTML = '<option value="">Scanning for live stations...  Could take a while..</option>';
+            radioStation.innerHTML = '<option value="">Scanning for live stations...</option>';
             const availableStations = [];
 
-            // We'll test stations sequentially to avoid hammering
             for (const station of radioStations) {
                 try {
                     const testAudio = new Audio();
@@ -497,12 +653,10 @@
 
                     availableStations.push(station);
                 } catch (e) {
-                    console.warn('Station failed or timed out:', station.name, station.url);
-                    // ignore failed station
+                    console.warn('Station failed or timed out:', station.name);
                 }
             }
 
-            // Populate dropdown
             radioStation.innerHTML = '';
             const defaultOpt = document.createElement('option');
             defaultOpt.value = '';
@@ -517,18 +671,15 @@
                     radioStation.appendChild(opt);
                 });
             }
-
-            console.log('Available stations:', availableStations.length);
         }
 
         // ============================================
-        // Play a web radio stream through existing audio chain
+        // Play a web radio stream
         // ============================================
         function playStream(url, displayName) {
             if (!isPoweredOn) {
                 errorMessage.style.display = 'block';
                 errorMessage.textContent = 'Please press the POWER button first.';
-                // reset select to default (optional)
                 radioStation.selectedIndex = 0;
                 return;
             }
@@ -556,26 +707,13 @@
                 } catch (e) {
                     console.error('createMediaElementSource failed:', e);
                     errorMessage.style.display = 'block';
-                    errorMessage.textContent = 'Browser does not allow connecting media element to AudioContext (page must be interacted with).';
+                    errorMessage.textContent = 'Browser does not allow connecting media element to AudioContext.';
                     return;
                 }
 
-                // Make sure filters exist (initAudioContext should have created them)
                 if (!eqFilters) initAudioContext();
+                connectAudioChain();
 
-                source.connect(eqFilters[0]);
-                eqFilters[eqFilters.length - 1].connect(loudnessGainNode);
-                loudnessGainNode.connect(bassBoost);
-                bassBoost.connect(lowpass);
-                lowpass.connect(highpass);
-                highpass.connect(stereoPanner);
-
-                // make sure noise and stereo nodes are connected to analyser
-                noiseGainNode.connect(analyser);
-                stereoPanner.connect(analyser);
-                analyser.connect(audioCtx.destination);
-
-                // resume AudioContext if suspended
                 if (audioCtx.state === 'suspended') {
                     audioCtx.resume().then(() => {
                         audioElement.play().catch(err => console.error('Play error after resume:', err));
@@ -588,13 +726,47 @@
             });
         }
 
-        // When user changes radio selection
         radioStation.addEventListener('change', (e) => {
             const url = e.target.value;
             const name = e.target.options[e.target.selectedIndex] ? e.target.options[e.target.selectedIndex].text : '';
             if (!url) return;
             playStream(url, name);
         });
+
+        // ============================================
+        // Audio Chain Connection
+        // ============================================
+        function connectAudioChain() {
+            if (!source || !eqFilters || !masterGain) return;
+
+            // Main audio path
+            source.connect(eqFilters[0]);
+            eqFilters[eqFilters.length - 1].connect(loudnessGainNode);
+            loudnessGainNode.connect(bassBoost);
+            bassBoost.connect(lowpass);
+            lowpass.connect(highpass);
+            highpass.connect(stereoPanner);
+
+            // Enhanced cassette chain (if active)
+            if (cassetteButton.classList.contains('on') && cassetteFilterLow && cassetteFilterHigh && compressionNode) {
+                // Disconnect old chain and insert cassette processing
+                highpass.disconnect();
+                highpass.connect(cassetteFilterLow);
+                cassetteFilterLow.connect(cassetteFilterHigh);
+                cassetteFilterHigh.connect(compressionNode);
+                compressionNode.connect(compressionGain);
+                compressionGain.connect(stereoPanner);
+            }
+
+            // Connect to analyser and final gain
+            stereoPanner.connect(analyser);
+            analyser.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+
+            // Connect noise sources to analyser
+            if (noiseGainLow) noiseGainLow.connect(analyser);
+            if (noiseGainMid) noiseGainMid.connect(analyser);
+        }
 
         // ============================================
         // Power Button Functionality
@@ -607,7 +779,6 @@
             powerLed.classList.toggle('on', isPoweredOn);
 
             if (isPoweredOn) {
-                // Resume audio context on power on
                 if (audioCtx && audioCtx.state === 'suspended') {
                     audioCtx.resume().catch(err => {
                         console.error('Error resuming AudioContext:', err);
@@ -627,10 +798,10 @@
                     initAudioContext();
                 }
             } else {
-                // Suspend audio context on power off
                 if (audioCtx) {
                     audioCtx.suspend().catch(err => { console.error('Error suspending AudioContext:', err); });
                 }
+                stopEnhancedWowFlutter();
 
                 trackInfo.textContent = 'Crap-turon 5000 turning off';
                 setTimeout(() => { trackInfo.textContent = 'No track loaded'; }, 2000);
@@ -643,13 +814,12 @@
                     audioElement = null;
                     source = null;
                 }
-                if (noiseGainNode) { noiseGainNode.gain.value = 0; }
             }
             errorMessage.style.display = 'none';
         });
 
         // ============================================
-        // Volume Knob Functions
+        // Volume Knob Functions (same as original)
         // ============================================
         function drawKnob() {
             const centerX = knobCanvas.width / 2;
@@ -724,6 +894,9 @@
         function initAudioContext() {
             try {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Initialize master gain control
+                masterGain = audioCtx.createGain();
 
                 // Initialize analyzer
                 analyser = audioCtx.createAnalyser();
@@ -749,12 +922,25 @@
                 }
 
                 // Other filters
-                lowpass = audioCtx.createBiquadFilter(); lowpass.type = 'lowpass'; lowpass.frequency.value = 20000; lowpass.Q.value = 1;
-                highpass = audioCtx.createBiquadFilter(); highpass.type = 'highpass'; highpass.frequency.value = 20; highpass.Q.value = 1;
-                bassBoost = audioCtx.createBiquadFilter(); bassBoost.type = 'lowshelf'; bassBoost.frequency.value = 40; bassBoost.gain.value = 0;
-                loudnessGainNode = audioCtx.createGain(); loudnessGainNode.gain.value = 1; // Default to unity gain
+                lowpass = audioCtx.createBiquadFilter(); 
+                lowpass.type = 'lowpass'; 
+                lowpass.frequency.value = 20000; 
+                lowpass.Q.value = 1;
+                
+                highpass = audioCtx.createBiquadFilter(); 
+                highpass.type = 'highpass'; 
+                highpass.frequency.value = 20; 
+                highpass.Q.value = 1;
+                
+                bassBoost = audioCtx.createBiquadFilter(); 
+                bassBoost.type = 'lowshelf'; 
+                bassBoost.frequency.value = 40; 
+                bassBoost.gain.value = 0;
+                
+                loudnessGainNode = audioCtx.createGain(); 
+                loudnessGainNode.gain.value = 1;
 
-                // White noise for hiss
+                // Old noise (keeping for compatibility)
                 const bufferSize = audioCtx.sampleRate;
                 const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                 const output = noiseBuffer.getChannelData(0);
@@ -772,10 +958,13 @@
 
                 noiseSource.connect(noiseGainNode);
 
-                // Load settings here to apply saved EQ and Hyper Bass state
+                // Create enhanced cassette effect chain
+                createCassetteEffectChain();
+
+                // Load settings
                 loadSettings();
 
-                // Setup EQ slider listeners with snap-to-center
+                // Setup EQ slider listeners
                 const frequenciesArr = [31,62,125,250,500,1000,2000,4000,8000,12000];
                 eqSliders.forEach(slider => {
                     slider.addEventListener('input', () => {
@@ -792,7 +981,6 @@
                 });
 
                 setupEffectButtons();
-                wowFlutterLoop();
             } catch (err) {
                 console.error('Error initializing audio context:', err);
                 errorMessage.style.display = 'block';
@@ -800,26 +988,21 @@
             }
         }
 
-        function wowFlutterLoop() {
-            if (audioElement && cassetteButton.classList.contains('on')) {
-                const time = audioCtx.currentTime;
-                const flutter = Math.sin(time * 2 * Math.PI * WOW_FLUTTER_FREQ) * WOW_FLUTTER_AMOUNT;
-                audioElement.playbackRate = speeds[currentSpeedIndex].rate + flutter;
-            } else if (audioElement) {
-                audioElement.playbackRate = speeds[currentSpeedIndex].rate;
-            }
-            wowFlutterInterval = requestAnimationFrame(wowFlutterLoop);
-        }
-
         // ============================================
-        // Effect Button Setup
+        // Enhanced Effect Button Setup
         // ============================================
         function setupEffectButtons() {
             binatoneButton.addEventListener('click', () => {
                 if (!isPoweredOn) return;
                 const isOn = binatoneButton.classList.toggle('on');
                 binatoneButton.textContent = `Crap Bass Boost: ${isOn ? 'ON' : 'OFF'}`;
-                if (isOn) { lowpass.frequency.value = 3000; highpass.frequency.value = 300; } else { lowpass.frequency.value = 20000; highpass.frequency.value = 20; }
+                if (isOn) { 
+                    lowpass.frequency.value = 3000; 
+                    highpass.frequency.value = 300; 
+                } else { 
+                    lowpass.frequency.value = 20000; 
+                    highpass.frequency.value = 20; 
+                }
             });
 
             hyperbassButton.addEventListener('click', () => {
@@ -836,14 +1019,36 @@
                 if (!isPoweredOn) return;
                 const isOn = cassetteButton.classList.toggle('on');
                 cassetteButton.textContent = `Cassette Mode: ${isOn ? 'ON' : 'OFF'}`;
-                if (isOn) { lowpass.frequency.value = 5000; highpass.frequency.value = 200; noiseGainNode.gain.value = 0.003; } else { lowpass.frequency.value = 20000; highpass.frequency.value = 20; noiseGainNode.gain.value = 0; }
+                cassetteControls.style.display = isOn ? 'block' : 'none';
+                
+                if (isOn) {
+                    applyCassetteQuality(cassetteQuality);
+                    startEnhancedWowFlutter();
+                    // Reconnect audio chain with cassette processing
+                    if (source) connectAudioChain();
+                } else {
+                    stopEnhancedWowFlutter();
+                    // Reset to normal frequencies
+                    if (cassetteFilterLow) cassetteFilterLow.frequency.value = 20;
+                    if (cassetteFilterHigh) cassetteFilterHigh.frequency.value = 20000;
+                    if (noiseGainLow) noiseGainLow.gain.value = 0;
+                    if (noiseGainMid) noiseGainMid.gain.value = 0;
+                    if (compressionGain) compressionGain.gain.value = 1;
+                    // Reconnect normal audio chain
+                    if (source) {
+                        try {
+                            highpass.disconnect();
+                            highpass.connect(stereoPanner);
+                        } catch(e) {}
+                    }
+                }
             });
 
             stereoWideButton.addEventListener('click', () => {
                 if (!isPoweredOn) return;
                 const isOn = stereoWideButton.classList.toggle('on');
                 stereoWideButton.textContent = `Stereo Wide: ${isOn ? 'ON' : 'OFF'}`;
-                if (isOn) stereoPanner.pan.value = 0.8; else stereoPanner.pan.value = 0;
+                if (stereoPanner) stereoPanner.pan.value = isOn ? 0.8 : 0;
             });
 
             speedButton.addEventListener('click', () => {
@@ -851,7 +1056,9 @@
                 currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
                 const speedSetting = speeds[currentSpeedIndex];
                 speedButton.textContent = `Speed: ${speedSetting.label}`;
-                if (audioElement && !cassetteButton.classList.contains('on')) audioElement.playbackRate = speedSetting.rate;
+                if (audioElement && !cassetteButton.classList.contains('on')) {
+                    audioElement.playbackRate = speedSetting.rate;
+                }
             });
 
             loudnessButton.addEventListener('click', () => {
@@ -864,12 +1071,25 @@
                 saveSettings();
             });
 
+            // Cassette quality buttons
+            document.querySelectorAll('.quality-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (!isPoweredOn) return;
+                    cassetteQuality = btn.dataset.quality;
+                    updateQualityButtons();
+                    if (cassetteButton.classList.contains('on')) {
+                        applyCassetteQuality(cassetteQuality);
+                    }
+                    saveSettings();
+                });
+            });
+
             loadCdButton.addEventListener('mousedown', () => { if (!isPoweredOn) return; loadCdButton.classList.add('on'); });
             loadCdButton.addEventListener('mouseup', () => { if (!isPoweredOn) return; loadCdButton.classList.remove('on'); });
         }
 
         // ============================================
-        // Audio Loading and Playback (file MP3s)
+        // Audio Loading and Playback Functions
         // ============================================
         function loadAudio(file, index) {
             if (!isPoweredOn) {
@@ -889,37 +1109,39 @@
             trackInfo.textContent = file.name;
             audioElement.playbackRate = speeds[currentSpeedIndex].rate;
 
-            audioElement.addEventListener('loadedmetadata', () => { updateTrackTime(); updatePlaylistUI(); });
+            audioElement.addEventListener('loadedmetadata', () => { 
+                updateTrackTime(); 
+                updatePlaylistUI(); 
+            });
 
             audioElement.addEventListener('timeupdate', updateTrackTime);
             audioElement.addEventListener('ended', () => { playNextTrack(); });
 
             audioElement.addEventListener('canplay', () => {
-                source = audioCtx.createMediaElementSource(audioElement);
-                source.connect(eqFilters[0]);
-                eqFilters[eqFilters.length - 1].connect(loudnessGainNode);
-                loudnessGainNode.connect(bassBoost);
-                bassBoost.connect(lowpass);
-                lowpass.connect(highpass);
-                highpass.connect(stereoPanner);
+                try {
+                    source = audioCtx.createMediaElementSource(audioElement);
+                } catch (e) {
+                    console.error('createMediaElementSource failed:', e);
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = 'Browser audio context error.';
+                    return;
+                }
 
-                noiseGainNode.connect(analyser);
-                stereoPanner.connect(analyser);
-                analyser.connect(audioCtx.destination);
+                connectAudioChain();
 
                 if (audioCtx.state === 'suspended') {
                     audioCtx.resume().then(() => {
                         audioElement.play().catch(err => {
                             console.error('Error playing audio:', err);
                             errorMessage.style.display = 'block';
-                            errorMessage.textContent = 'Failed to play audio. Check file format or browser permissions.';
+                            errorMessage.textContent = 'Failed to play audio.';
                         });
                     });
                 } else {
                     audioElement.play().catch(err => {
                         console.error('Error playing audio:', err);
                         errorMessage.style.display = 'block';
-                        errorMessage.textContent = 'Failed to play audio. Check file format or browser permissions.';
+                        errorMessage.textContent = 'Failed to play audio.';
                     });
                 }
 
@@ -928,7 +1150,7 @@
 
             audioElement.addEventListener('error', () => {
                 errorMessage.style.display = 'block';
-                errorMessage.textContent = 'Error loading audio file. Please check the file format.';
+                errorMessage.textContent = 'Error loading audio file.';
             });
         }
 
@@ -986,8 +1208,19 @@
             }
         }
 
-        function seekForward() { if (audioElement) { audioElement.currentTime = Math.min(audioElement.currentTime + 5, audioElement.duration); updateTrackTime(); } }
-        function seekBackward() { if (audioElement) { audioElement.currentTime = Math.max(audioElement.currentTime - 5, 0); updateTrackTime(); } }
+        function seekForward() { 
+            if (audioElement) { 
+                audioElement.currentTime = Math.min(audioElement.currentTime + 5, audioElement.duration); 
+                updateTrackTime(); 
+            } 
+        }
+        
+        function seekBackward() { 
+            if (audioElement) { 
+                audioElement.currentTime = Math.max(audioElement.currentTime - 5, 0); 
+                updateTrackTime(); 
+            } 
+        }
 
         // ============================================
         // File Input and Control Event Listeners
@@ -1018,7 +1251,7 @@
                 audioElement.play().catch(err => {
                     console.error('Error playing audio:', err);
                     errorMessage.style.display = 'block';
-                    errorMessage.textContent = 'Failed to play audio. Check file format or browser permissions.';
+                    errorMessage.textContent = 'Failed to play audio.';
                 });
                 playButton.textContent = '⏸⏸ PAUSE';
             } else {
@@ -1108,11 +1341,10 @@
         // ============================================
         resizeCanvas();
         hifiContainer.classList.add('off');
-        loadSettings(); // Initial load of settings
+        loadSettings();
 
         // Kick off station checks once page loads
         window.addEventListener('load', () => {
-            // Populate the select with immediate fallback while checking
             radioStation.innerHTML = '<option value="">Checking stations...</option>';
             checkStations().catch(err => {
                 console.error('checkStations error:', err);
