@@ -7,7 +7,7 @@ Also has a Cassette effect that reflects the bad wow and flutter with speed adju
 Fake Stereo wide in true budget fashion. 
 Hyper Bass for real low down sub 40hz boost -- Actuallly works better than planned, 
 Speed selectable like an old record 33rpm, 45rpm and 78rpm.
-Now with added a hilarious 'High Speed Dubbing' Mode
+Now with an a hilarious 'High Speed Dubbing' Mode
 
 Load your own MP3 songs or select from a list of web radios to listen to.
 
