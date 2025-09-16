@@ -1219,7 +1219,7 @@
             audioElement.preservesPitch = !isWarpOn; // Turn off pitch preservation when warping
             
             const startRate = audioElement.playbackRate;
-            const targetRate = isWarpOn ? 10.0 : speeds[currentSpeedIndex].rate;
+            const targetRate = isWarpOn ? 5.0 : speeds[currentSpeedIndex].rate;
             const duration = 2000; // 2 seconds
             const startTime = performance.now();
             
