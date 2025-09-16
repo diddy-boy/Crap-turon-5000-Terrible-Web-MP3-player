@@ -1,7 +1,5 @@
-A web page based MP3 player that has effects to replicate cheap budget HI-FI, where quantity take precedence over quality.
-
-Plenty of good MP3 players out there, so why not make a terrible one based on a 1990's Hi-Fi... but made to look like the budget brands. 
-No expense was spared because there was none to start with ...
+If you're into quirky, retro-inspired tech with a sense of humour, the Crap-turon 5000 is a delightfully ironic creation. 
+It’s a web-based MP3 player designed to mimic the worst of 1990s budget Hi-Fi systems—on purpose...
 
 Volume control in a misplaced awkward rotation, just like those Temu Hi-Fi systems.... where quality takes second place to price. 
 11 band equaliser. Has effects that can replicate a budget hi-fi, you know the ones that worked for 5 minutes and then get smashed up. 
