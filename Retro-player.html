@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Crap-turon 5000 LoFi Player</title>
+    <title>Crap-turon 5000 LoFi Player - Enhanced Cassette</title>
     <style>
         body { background: #1a1a1a; margin: 0; font-family: 'Arial Narrow', Arial, sans-serif; }
         .hifi-container { max-width: 900px; margin: 30px auto; padding: 25px; background: linear-gradient(145deg, #2b2b2b, #404040); border: 4px solid #555; border-radius: 12px; box-shadow: inset 0 0 15px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.7); color:#d0d0d0; transition: filter 0.3s; position: relative }
@@ -51,16 +51,12 @@
 		#radioStation { background-color: #808080; color: white; border: 2px solid #777; border-radius: 6px; padding: 10px; font-weight: bold;       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2); }
         #radioStation option { background-color: #808080; color: white; }
         
-        /* ORIGINAL CSS: .stereo-effect { display:flex; justify-content:space-around; align-items:center; flex-wrap: wrap; gap: 10px; } */
-
-        /* NEW CSS for the 3-wide button grid */
         .effect-button-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* Creates 3 equally wide columns */
-            gap: 15px; /* Adds space between the buttons */
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
             width: 100%;
         }
-        /* Update for buttons inside the new grid to inherit full width */
         .effect-button-grid .button-effect {
             width: auto; 
             min-width: 0;
@@ -74,7 +70,6 @@
         .error-message { color:#ff4444; text-align:center; padding:10px; font-family:'Courier New', monospace; display:none; }
 		.fm-radio-box { width: 250px; }
 
-        /* Cassette Quality Settings */
         .cassette-controls { background:#2a2a2a; padding:15px; margin-top:10px; border:2px solid #555; border-radius:6px; }
         .cassette-controls h4 { color:#ffaa44; margin:0 0 10px 0; }
         .quality-selector { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
@@ -108,16 +103,16 @@
             <div class="track-info" id="trackInfo" style="text-align: center;">No track loaded</div>
             <div class="track-time" id="trackTime" style="text-align: center;">0:00 / 0:00</div>
             <div class="transport-controls" style="text-align: center;">
-                <button id="prevButton">⏮</button>
+                <button id="prevButton">⮜</button>
                 <button id="playButton">▶ PLAY</button>
-                <button id="nextButton">⏭</button>
+                <button id="nextButton">⮞</button>
             </div>
         </div>
 
         <div class="section cd-transport">
             <div class="cd-panel" style="text-align: center;">
                 <label for="radioStation" class="button-effect">FM RADIO</label>
-                <select id="radioStation" class="button-effect"><option value="">Loading stations...</option></select>
+                <select id="radioStation" class="button-effect"><option value="">Checking for live stations...</option></select>
             </div>
         </div>
 
@@ -199,7 +194,7 @@
                 <button class="button-effect" id="loudnessButton">Loudness: OFF</button>
                 <button class="button-effect" id="cassetteButton">Cassette Mode: OFF</button>
                 <button class="button-effect" id="tapeTypeButton">Tape Type: Normal</button>
-                <button class="button-effect" id="dolbyButton">Dolby B Type: OFF</button>
+                <button class="button-effect" id="bolbyButton">Bolby B Type: OFF</button>
                 </div>
 
             <div class="cassette-controls" id="cassetteControls" style="display:none; width:100%;">
@@ -225,11 +220,7 @@
         Crap-turon 5000 brought to you by Craptronics Plc
         </div>
     <script>
-        // ============================================
         // Global Variables
-        // ============================================
-
-        // Power Button Elements
         const powerButton = document.getElementById('powerButton');
         const powerLed = document.getElementById('powerLed');
         const hifiContainer = document.getElementById('hifiContainer');
@@ -262,24 +253,20 @@
         const eqSliders = document.querySelectorAll('.eq-slider');
         const cassetteControls = document.getElementById('cassetteControls');
         const warpDriveButton = document.getElementById('warpDriveButton');
-        
-        // NEW CONTROL ELEMENTS
         const tapeTypeButton = document.getElementById('tapeTypeButton');
-        const dolbyButton = document.getElementById('dolbyButton');
+        const bolbyButton = document.getElementById('bolbyButton');
         
-        // NEW STATE VARIABLES
+        // State Variables
         const tapeTypes = ['Normal', 'Chrome', 'Metal'];
         let currentTapeTypeIndex = 0;
-        let isDolbyBOn = false;
+        let isBolbyBOn = false;
 
         // Radio Element
         const radioStation = document.getElementById('radioStation');
 
         // Audio Context Variables
         let audioCtx, analyser, audioElement, source, eqFilters, lowpass, highpass, bassBoost, noiseSource, noiseGainNode, stereoPanner, loudnessGainNode, masterGain;
-        
-        // NEW AUDIO CONTEXT NODES
-        let tapeBiasFilter, dolbyBFilter;
+        let tapeBiasFilter, bolbyBFilter;
 
         // Playlist Variables
         let playlist = [];
@@ -352,14 +339,10 @@
 			}
         };
 
-        // ============================================
         // Enhanced Cassette Effect Functions
-        // ============================================
-
         function createCassetteEffectChain() {
             if (!audioCtx) return;
 
-            // Create wow & flutter using multiple oscillators for realism
             wowFlutterOscillator = audioCtx.createOscillator();
             wowFlutterOscillator.type = 'sine';
             wowFlutterOscillator.frequency.value = 0.1;
@@ -370,8 +353,6 @@
             wowFlutterOscillator.connect(wowFlutterGain);
             wowFlutterOscillator.start();
 
-            // Create multiple noise sources for realistic tape hiss
-            // High frequency hiss
             const hissBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
             const hissData = hissBuffer.getChannelData(0);
             for (let i = 0; i < audioCtx.sampleRate; i++) {
@@ -386,11 +367,9 @@
             noiseGainLow = audioCtx.createGain();
             noiseGainLow.gain.value = 0;
 
-            // Mid-frequency noise for more realistic hiss
             const midHissBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
             const midHissData = midHissBuffer.getChannelData(0);
             for (let i = 0; i < audioCtx.sampleRate; i++) {
-                // More filtered noise for mid frequencies
                 midHissData[i] = (Math.random() * 2 - 1) * Math.sin(i * 0.001) * 0.3;
             }
 
@@ -402,7 +381,6 @@
             noiseGainMid = audioCtx.createGain();
             noiseGainMid.gain.value = 0;
 
-            // Compression for tape saturation effect
             compressionNode = audioCtx.createDynamicsCompressor();
             compressionNode.threshold.value = -15;
             compressionNode.knee.value = 8;
@@ -413,7 +391,6 @@
             compressionGain = audioCtx.createGain();
             compressionGain.gain.value = 1;
 
-            // Cassette-specific frequency response
             cassetteFilterLow = audioCtx.createBiquadFilter();
             cassetteFilterLow.type = 'highpass';
             cassetteFilterLow.frequency.value = 60;
@@ -424,19 +401,16 @@
             cassetteFilterHigh.frequency.value = 12000;
             cassetteFilterHigh.Q.value = 0.7;
             
-            // NEW: Tape Bias Filter (for Normal/Chrome/Metal)
             tapeBiasFilter = audioCtx.createBiquadFilter();
-            tapeBiasFilter.type = 'highshelf'; // Used for high-frequency EQ changes
-            tapeBiasFilter.frequency.value = 10000; // Affects frequencies above 10kHz
-            tapeBiasFilter.gain.value = 0; // Starts at normal
+            tapeBiasFilter.type = 'highshelf';
+            tapeBiasFilter.frequency.value = 10000;
+            tapeBiasFilter.gain.value = 0;
 
-            // NEW: Dolby B Filter (for high-frequency noise reduction)
-            dolbyBFilter = audioCtx.createBiquadFilter();
-            dolbyBFilter.type = 'highshelf';
-            dolbyBFilter.frequency.value = 5000; // Affects frequencies above 5kHz
-            dolbyBFilter.gain.value = 0; // Starts off
+            bolbyBFilter = audioCtx.createBiquadFilter();
+            bolbyBFilter.type = 'highshelf';
+            bolbyBFilter.frequency.value = 5000;
+            bolbyBFilter.gain.value = 0;
 
-            // Connect noise sources to analyser
             noiseSourceLow.connect(noiseGainLow);
             noiseSourceMid.connect(noiseGainMid);
 
@@ -448,21 +422,17 @@
             const preset = cassettePresets[quality];
             if (!preset || !audioCtx) return;
 
-            // Update wow & flutter
             if (wowFlutterOscillator && wowFlutterGain) {
                 wowFlutterOscillator.frequency.value = preset.wowFlutterSpeed;
                 wowFlutterGain.gain.value = preset.wowFlutterAmount;
             }
 
-            // Update noise levels
             if (noiseGainLow) noiseGainLow.gain.value = preset.hissLevel;
             if (noiseGainMid) noiseGainMid.gain.value = preset.hissLevel * 0.6;
 
-            // Update frequency response
             if (cassetteFilterLow) cassetteFilterLow.frequency.value = preset.lowCut;
             if (cassetteFilterHigh) cassetteFilterHigh.frequency.value = preset.highCut;
 
-            // Update compression for saturation
             if (compressionNode && compressionGain) {
                 compressionGain.gain.value = preset.compressionRatio;
                 compressionNode.threshold.value = -15 + (preset.distortionLevel * 10);
@@ -471,7 +441,6 @@
             cassetteQuality = quality;
         }
         
-        // This is the updated, corrected function
         function startEnhancedWowFlutter() {
             if (wowFlutterAnimationId) {
                 cancelAnimationFrame(wowFlutterAnimationId);
@@ -484,46 +453,34 @@
                     const preset = cassettePresets[cassetteQuality];
                     const time = audioCtx.currentTime;
 
-                    // Standard wow & flutter effect
                     const mainWow = Math.sin(time * 2 * Math.PI * 0.1) * preset.wowFlutterAmount;
                     const flutter = Math.sin(time * 2 * Math.PI * 0.8) * (preset.wowFlutterAmount * 0.3);
                     const randomFlutter = (Math.random() - 0.5) * preset.wowFlutterAmount * 0.1;
                     const totalFlutter = mainWow + flutter + randomFlutter;
 
-                    // Apply the pitch change
                     audioElement.playbackRate = Math.max(0.1, speeds[currentSpeedIndex].rate + totalFlutter);
 
-                    // === Chewed Up effect logic ===
                     if (cassetteQuality === 'chewedUp') {
-                        // Schedule a dropout every 5 seconds
                         if (!dropoutScheduled) {
-                            const dropoutTime = time + 5; // Schedule 5 seconds from now
-                            const preDropoutTime = dropoutTime - 0.5; // 0.5 seconds before dropout
+                            const dropoutTime = time + 5;
+                            const preDropoutTime = dropoutTime - 0.5;
                             
-                            // Schedule bandwidth narrowing
                             cassetteFilterHigh.frequency.setValueAtTime(800, preDropoutTime);
                             cassetteFilterLow.frequency.setValueAtTime(400, preDropoutTime);
-
-                            // Schedule volume drop
                             masterGain.gain.setValueAtTime(0.2, dropoutTime);
-                            
-                            // Schedule a pitch change during the dropout
                             audioElement.playbackRate = Math.max(0.1, speeds[currentSpeedIndex].rate - 0.2);
 
-                            // Schedule recovery of bandwidth, pitch, and volume
-                            masterGain.gain.setValueAtTime(1, dropoutTime + 1); // Recover in 1 second
+                            masterGain.gain.setValueAtTime(1, dropoutTime + 1);
                             cassetteFilterHigh.frequency.setValueAtTime(preset.highCut, dropoutTime + 1.1);
                             cassetteFilterLow.frequency.setValueAtTime(preset.lowCut, dropoutTime + 1.1);
                             
                             dropoutScheduled = true;
                             
-                            // Reset dropoutScheduled flag after the event has passed
                             setTimeout(() => {
                                 dropoutScheduled = false;
                             }, (dropoutTime + 2 - time) * 1000);
                         }
                     } else {
-                        // Reset to normal values if not 'chewedUp'
                         masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
                         masterGain.gain.setValueAtTime(1, audioCtx.currentTime);
                         cassetteFilterHigh.frequency.cancelScheduledValues(audioCtx.currentTime);
@@ -534,7 +491,6 @@
                     }
 
                 } else if (audioElement) {
-                    // Ensure playback rate is normal when cassette mode is off
                     audioElement.playbackRate = speeds[currentSpeedIndex].rate;
                 }
 
@@ -551,26 +507,19 @@
             }
         }
         
-        // NEW: Tape Bias EQ Function
         function applyTapeBiasEQ() {
             if (!tapeBiasFilter || !audioCtx) return;
             
-            let gain = 0; // Normal tape (Type I) has no extra EQ change
+            let gain = 0;
             const tapeType = tapeTypes[currentTapeTypeIndex];
             tapeTypeButton.textContent = `Tape Type: ${tapeType}`;
 
-            // Simulating high-frequency playback EQ differences
             if (tapeType === 'Chrome') {
-                // Chrome (Type II) is often recorded with less high-frequency pre-emphasis, 
-                // so playback equalization has less boost, resulting in a naturally brighter sound.
-                // We simulate this lower boost by applying a negative gain.
-                gain = -3; // -3dB high-shelf cut
+                gain = -3;
             } else if (tapeType === 'Metal') {
-                // Metal (Type IV) is similar to Chrome, but sometimes with a slightly flatter curve.
-                gain = -2; // -2dB high-shelf cut
+                gain = -2;
             }
             
-            // If Cassette Mode is OFF, the tape type button still updates but doesn't apply the effect.
             if (cassetteButton.classList.contains('on')) {
                 tapeBiasFilter.gain.setValueAtTime(gain, audioCtx.currentTime);
             } else {
@@ -580,29 +529,22 @@
             saveSettings();
         }
         
-        // NEW: Dolby B Noise Reduction Function
-        function toggleDolbyB() {
-            if (!dolbyBFilter || !audioCtx) return;
+        function toggleBolbyB() {
+            if (!bolbyBFilter || !audioCtx) return;
             
-            isDolbyBOn = dolbyButton.classList.contains('on');
-            dolbyButton.textContent = `Dolby B Type: ${isDolbyBOn ? 'ON' : 'OFF'}`;
+            isBolbyBOn = bolbyButton.classList.contains('on');
+            bolbyButton.textContent = `Bolby B Type: ${isBolbyBOn ? 'ON' : 'OFF'}`;
 
-            if (isDolbyBOn) {
-                // Dolby B reduces noise by expanding the high frequencies (reducing gain) on playback.
-                // We simulate the noise reduction effect by reducing high-frequency gain.
-                dolbyBFilter.gain.setValueAtTime(-10, audioCtx.currentTime); // -10dB high-shelf cut
+            if (isBolbyBOn) {
+                bolbyBFilter.gain.setValueAtTime(-10, audioCtx.currentTime);
             } else {
-                dolbyBFilter.gain.setValueAtTime(0, audioCtx.currentTime);
+                bolbyBFilter.gain.setValueAtTime(0, audioCtx.currentTime);
             }
             
             saveSettings();
         }
 
-
-        // ============================================
         // LocalStorage Functions
-        // ============================================
-
         function saveSettings() {
             try {
                 const settings = {
@@ -611,13 +553,12 @@
                     equalizer: Array.from(eqSliders).map(slider => parseFloat(slider.value)),
                     loudnessOn: loudnessButton.classList.contains('on'),
                     cassetteQuality: cassetteQuality,
-                    // NEW SETTINGS
                     currentTapeTypeIndex: currentTapeTypeIndex,
-                    isDolbyBOn: dolbyButton.classList.contains('on')
+                    isBolbyBOn: bolbyButton.classList.contains('on')
                 };
                 localStorage.setItem('crapTuronSettings', JSON.stringify(settings));
             } catch (e) {
-                console.error('Failed to save settings to localStorage:', e);
+                console.error('Failed to save settings:', e);
             }
         }
 
@@ -627,14 +568,12 @@
                 if (savedSettings) {
                     const settings = JSON.parse(savedSettings);
 
-                    // Restore volume
                     volume = settings.volume || 50;
                     drawKnob();
                     if (audioElement) {
                         audioElement.volume = volume / 100;
                     }
 
-                    // Restore Hyper Bass
                     if (settings.hyperBassOn) {
                         hyperbassButton.classList.add('on');
                         hyperbassButton.textContent = 'Hyper Bass: ON';
@@ -643,7 +582,6 @@
                         }
                     }
 
-                    // Restore Equalizer bands
                     const frequencies = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 12000];
                     if (settings.equalizer && settings.equalizer.length === frequencies.length) {
                         eqSliders.forEach((slider, index) => {
@@ -655,7 +593,6 @@
                         });
                     }
 
-                    // Restore Loudness
                     if (settings.loudnessOn) {
                         loudnessButton.classList.add('on');
                         loudnessButton.textContent = 'Loudness: ON';
@@ -664,32 +601,26 @@
                         }
                     }
 
-                    // Restore Cassette Quality
                     if (settings.cassetteQuality) {
                         cassetteQuality = settings.cassetteQuality;
                         updateQualityButtons();
                     }
                     
-                    // NEW: Restore Tape Type
                     if (settings.currentTapeTypeIndex !== undefined) {
                         currentTapeTypeIndex = settings.currentTapeTypeIndex;
-                        // Button text update is done in applyTapeBiasEQ on init
                     }
                     
-                    // NEW: Restore Dolby B
-                    if (settings.isDolbyBOn) {
-                        dolbyButton.classList.add('on');
-                        // Effect application is done in toggleDolbyB on init
+                    if (settings.isBolbyBOn) {
+                        bolbyButton.classList.add('on');
                     }
                     
-                    // Apply effects based on loaded state (needs audioCtx to be ready)
                     if (audioCtx) {
-                        applyTapeBiasEQ(); // Applies the correct text and initial EQ
-                        toggleDolbyB();    // Applies the correct text and initial EQ
+                        applyTapeBiasEQ();
+                        toggleBolbyB();
                     }
                 }
             } catch (e) {
-                console.warn('Failed to load settings from localStorage. Using defaults.', e);
+                console.warn('Failed to load settings. Using defaults.', e);
             }
         }
 
@@ -698,6 +629,592 @@
                 btn.classList.toggle('active', btn.dataset.quality === cassetteQuality);
             });
         }
+
+        // Audio Chain Connection
+        function connectAudioChain() {
+            if (!source || !eqFilters || !masterGain || !tapeBiasFilter || !bolbyBFilter) return;
+
+            source.connect(eqFilters[0]);
+            eqFilters[eqFilters.length - 1].connect(loudnessGainNode);
+            loudnessGainNode.connect(bassBoost);
+            bassBoost.connect(lowpass);
+            lowpass.connect(highpass);
+            
+            highpass.connect(tapeBiasFilter);
+            tapeBiasFilter.connect(bolbyBFilter);
+
+            if (cassetteButton.classList.contains('on') && cassetteFilterLow && cassetteFilterHigh && compressionNode) {
+                highpass.disconnect();
+                tapeBiasFilter.disconnect();
+
+                highpass.connect(cassetteFilterLow);
+                cassetteFilterLow.connect(cassetteFilterHigh);
+                cassetteFilterHigh.connect(compressionNode);
+                compressionNode.connect(compressionGain);
+                
+                compressionGain.connect(tapeBiasFilter);
+                tapeBiasFilter.connect(bolbyBFilter);
+                bolbyBFilter.connect(stereoPanner);
+
+            } else {
+                highpass.disconnect();
+                highpass.connect(tapeBiasFilter);
+                tapeBiasFilter.connect(bolbyBFilter);
+                bolbyBFilter.connect(stereoPanner);
+            }
+
+            stereoPanner.connect(analyser);
+            analyser.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+
+            if (noiseGainLow) noiseGainLow.connect(analyser);
+            if (noiseGainMid) noiseGainMid.connect(analyser);
+        }
+
+        // Power Button Functionality
+        powerButton.addEventListener('click', () => {
+            isPoweredOn = !isPoweredOn;
+            hifiContainer.classList.toggle('off', !isPoweredOn);
+            powerButton.textContent = isPoweredOn ? 'POWER ON' : 'POWER OFF';
+            powerButton.classList.toggle('on', isPoweredOn);
+            powerLed.classList.toggle('on', isPoweredOn);
+
+            if (isPoweredOn) {
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume().catch(err => {
+                        console.error('Error resuming AudioContext:', err);
+                        errorMessage.style.display = 'block';
+                        errorMessage.textContent = 'Please interact with the page to enable audio.';
+                    });
+                }
+                trackInfo.textContent = 'Crap-turon 5000 - Turning good sound to shit since 1988';
+                setTimeout(() => {
+                    trackInfo.textContent = 'No track loaded';
+                    if (playlist.length > 0 && currentTrackIndex >= 0) {
+                        trackInfo.textContent = playlist[currentTrackIndex].name;
+                    }
+                }, 5000);
+
+                if (!audioCtx) {
+                    initAudioContext();
+                } else {
+                    applyTapeBiasEQ();
+                    toggleBolbyB();
+                    if (cassetteButton.classList.contains('on')) startEnhancedWowFlutter();
+                }
+            } else {
+                if (audioCtx) {
+                    audioCtx.suspend().catch(err => { console.error('Error suspending AudioContext:', err); });
+                }
+                stopEnhancedWowFlutter();
+
+                trackInfo.textContent = 'Crap-turon 5000 turning off';
+                setTimeout(() => { trackInfo.textContent = 'No track loaded'; }, 2000);
+
+                if (audioElement) {
+                    audioElement.pause();
+                    playButton.textContent = '▶ PLAY';
+                    trackTime.textContent = '0:00 / 0:00';
+                    if (source) source.disconnect();
+                    audioElement = null;
+                    source = null;
+                }
+            }
+            errorMessage.style.display = 'none';
+        });
+
+        // Volume Knob Functions
+        function drawKnob() {
+            const centerX = knobCanvas.width / 2;
+            const centerY = knobCanvas.height / 2;
+            const radius = knobCanvas.width / 2 - 10;
+            const startAngle = (Math.PI / 180) * -140;
+            const endAngle = (Math.PI / 180) * 130;
+            const totalAngle = endAngle - startAngle;
+            const angle = startAngle + (totalAngle * (volume / 100));
+
+            knobCtx.clearRect(0, 0, knobCanvas.width, knobCanvas.height);
+
+            knobCtx.beginPath();
+            knobCtx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+            knobCtx.fillStyle = '#111';
+            knobCtx.fill();
+
+            knobCtx.beginPath();
+            knobCtx.arc(centerX, centerY, radius, startAngle, angle, false);
+            knobCtx.strokeStyle = '#ff4444';
+            knobCtx.lineWidth = 10;
+            knobCtx.stroke();
+
+            knobCtx.beginPath();
+            knobCtx.arc(centerX, centerY, radius - 15, 0, 2 * Math.PI, false);
+            knobCtx.fillStyle = '#333';
+            knobCtx.fill();
+            knobCtx.strokeStyle = '#555';
+            knobCtx.lineWidth = 2;
+            knobCtx.stroke();
+
+            const indicatorLength = radius - 15;
+            const indicatorX = centerX + indicatorLength * Math.cos(angle);
+            const indicatorY = centerY + indicatorLength * Math.sin(angle);
+            knobCtx.beginPath();
+            knobCtx.moveTo(centerX, centerY);
+            knobCtx.lineTo(indicatorX, indicatorY);
+            knobCtx.strokeStyle = '#ff4444';
+            knobCtx.lineWidth = 5;
+            knobCtx.stroke();
+
+            volumeDisplay.textContent = Math.round(volume);
+        }
+
+        function handleKnobInteraction(event) {
+            if (!isPoweredOn) return;
+            const rect = knobCanvas.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const angle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
+            let volumeAngle = angle * (180 / Math.PI);
+            const startLimit = -140;
+            const endLimit = 130;
+
+            if (volumeAngle < startLimit) { volumeAngle = startLimit; } else if (volumeAngle > endLimit) { volumeAngle = endLimit; }
+
+            volume = (volumeAngle - startLimit) * 100 / (endLimit - startLimit);
+
+            if (audioElement) { try { audioElement.volume = volume / 100; } catch (e) {} }
+
+            drawKnob();
+            saveSettings();
+        }
+
+        knobCanvas.addEventListener('mousedown', (event) => { if (!isPoweredOn) return; isDragging = true; handleKnobInteraction(event); });
+        document.addEventListener('mousemove', (event) => { if (isDragging) handleKnobInteraction(event); });
+        document.addEventListener('mouseup', () => { isDragging = false; });
+
+        // Audio Context Initialization
+        function initAudioContext() {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                masterGain = audioCtx.createGain();
+
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 256;
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                drawSpectrum(dataArray, bufferLength);
+
+                const frequencies = [31,62,125,250,500,1000,2000,4000,8000,12000];
+                eqFilters = frequencies.map(freq => {
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = 'peaking';
+                    filter.frequency.value = freq;
+                    filter.Q.value = 1.4;
+                    filter.gain.value = 0;
+                    return filter;
+                });
+
+                for (let i=0;i<eqFilters.length-1;i++) {
+                    eqFilters[i].connect(eqFilters[i+1]);
+                }
+
+                lowpass = audioCtx.createBiquadFilter(); 
+                lowpass.type = 'lowpass'; 
+                lowpass.frequency.value = 20000; 
+                lowpass.Q.value = 1;
+                
+                highpass = audioCtx.createBiquadFilter(); 
+                highpass.type = 'highpass'; 
+                highpass.frequency.value = 20; 
+                highpass.Q.value = 1;
+                
+                bassBoost = audioCtx.createBiquadFilter(); 
+                bassBoost.type = 'lowshelf'; 
+                bassBoost.frequency.value = 40; 
+                bassBoost.gain.value = 0;
+                
+                loudnessGainNode = audioCtx.createGain(); 
+                loudnessGainNode.gain.value = 1;
+
+                const bufferSize = audioCtx.sampleRate;
+                const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                for (let i=0;i<bufferSize;i++) output[i] = Math.random()*2 - 1;
+
+                noiseSource = audioCtx.createBufferSource();
+                noiseSource.buffer = noiseBuffer;
+                noiseSource.loop = true;
+                noiseSource.start();
+
+                noiseGainNode = audioCtx.createGain();
+                noiseGainNode.gain.value = 0;
+
+                stereoPanner = audioCtx.createStereoPanner();
+
+                noiseSource.connect(noiseGainNode);
+
+                createCassetteEffectChain();
+                loadSettings();
+
+                const frequenciesArr = [31,62,125,250,500,1000,2000,4000,8000,12000];
+                eqSliders.forEach(slider => {
+                    slider.addEventListener('input', () => {
+                        if (!isPoweredOn) return;
+                        const freq = parseFloat(slider.dataset.freq);
+                        const index = frequenciesArr.indexOf(freq);
+                        if (index !== -1 && eqFilters[index]) {
+                            const value = parseFloat(slider.value);
+                            if (Math.abs(value) < 1) slider.value = 0;
+                            eqFilters[index].gain.value = parseFloat(slider.value);
+                            saveSettings();
+                        }
+                    });
+                });
+
+                setupEffectButtons();
+                applyTapeBiasEQ();
+                toggleBolbyB();
+
+            } catch (err) {
+                console.error('Error initializing audio context:', err);
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Failed to initialize audio context. Please try again.';
+            }
+        }
+
+        // Enhanced Effect Button Setup
+        function setupEffectButtons() {
+            binatoneButton.addEventListener('click', () => {
+                if (!isPoweredOn) return;
+                const isOn = binatoneButton.classList.toggle('on');
+                binatoneButton.textContent = `Crap Bass Boost: ${isOn ? 'ON' : 'OFF'}`;
+                if (isOn) { 
+                    lowpass.frequency.value = 3000; 
+                    highpass.frequency.value = 300; 
+                } else { 
+                    lowpass.frequency.value = 20000; 
+                    highpass.frequency.value = 20; 
+                }
+            });
+
+            hyperbassButton.addEventListener('click', () => {
+                if (!isPoweredOn) return;
+                const isOn = hyperbassButton.classList.toggle('on');
+                hyperbassButton.textContent = `Hyper Bass: ${isOn ? 'ON' : 'OFF'}`;
+                if (bassBoost) {
+                    bassBoost.gain.value = isOn ? 5 : 0;
+                }
+                saveSettings();
+            });
+
+            cassetteButton.addEventListener('click', () => {
+                if (!isPoweredOn) return;
+                const isOn = cassetteButton.classList.toggle('on');
+                cassetteButton.textContent = `Cassette Mode: ${isOn ? 'ON' : 'OFF'}`;
+                cassetteControls.style.display = isOn ? 'block' : 'none';
+                
+                if (isOn) {
+                    applyCassetteQuality(cassetteQuality);
+                    applyTapeBiasEQ();
+                    startEnhancedWowFlutter();
+                    if (source) connectAudioChain();
+                } else {
+                    stopEnhancedWowFlutter();
+                    if (cassetteFilterLow) cassetteFilterLow.frequency.value = 20;
+                    if (cassetteFilterHigh) cassetteFilterHigh.frequency.value = 20000;
+                    if (noiseGainLow) noiseGainLow.gain.value = 0;
+                    if (noiseGainMid) noiseGainMid.gain.value = 0;
+                    if (compressionGain) compressionGain.gain.value = 1;
+                    if (tapeBiasFilter) tapeBiasFilter.gain.value = 0;
+                    
+                    if (source) {
+                        try {
+                            cassetteFilterHigh.disconnect();
+                            compressionGain.disconnect();
+                            connectAudioChain();
+                        } catch(e) { console.warn("Reconnection error:", e); }
+                    }
+                }
+            });
+
+            stereoWideButton.addEventListener('click', () => {
+                if (!isPoweredOn) return;
+                const isOn = stereoWideButton.classList.toggle('on');
+                stereoWideButton.textContent = `Stereo Wide: ${isOn ? 'ON' : 'OFF'}`;
+                if (stereoPanner) stereoPanner.pan.value = isOn ? 0.8 : 0;
+            });
+
+            speedButton.addEventListener('click', () => {
+                if (!isPoweredOn) return;
+                currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
+                const speedSetting = speeds[currentSpeedIndex];
+                speedButton.textContent = `Speed: ${speedSetting.label}`;
+                if (audioElement && !cassetteButton.classList.contains('on')) {
+                    audioElement.playbackRate = speedSetting.rate;
+                }
+            });
+
+            loudnessButton.addEventListener('click', () => {
+                if (!isPoweredOn) return;
+                const isOn = loudnessButton.classList.toggle('on');
+                loudnessButton.textContent = `Loudness: ${isOn ? 'ON' : 'OFF'}`;
+                if (loudnessGainNode) {
+                    loudnessGainNode.gain.value = isOn ? 1.2 : 1;
+                }
+                saveSettings();
+            });
+
+            tapeTypeButton.addEventListener('click', () => {
+                if (!isPoweredOn) return;
+                currentTapeTypeIndex = (currentTapeTypeIndex + 1) % tapeTypes.length;
+                applyTapeBiasEQ();
+            });
+            
+            bolbyButton.addEventListener('click', () => {
+                if (!isPoweredOn) return;
+                bolbyButton.classList.toggle('on');
+                toggleBolbyB();
+            });
+            
+            document.querySelectorAll('.quality-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (!isPoweredOn) return;
+                    cassetteQuality = btn.dataset.quality;
+                    updateQualityButtons();
+                    if (cassetteButton.classList.contains('on')) {
+                        applyCassetteQuality(cassetteQuality);
+                    }
+                    saveSettings();
+                });
+            });
+
+            loadCdButton.addEventListener('mousedown', () => { if (!isPoweredOn) return; loadCdButton.classList.add('on'); });
+            loadCdButton.addEventListener('mouseup', () => { if (!isPoweredOn) return; loadCdButton.classList.remove('on'); });
+        }
+        
+        function toggleWarpDrive() {
+            if (!isPoweredOn || !audioElement) return;
+
+            const isWarpOn = warpDriveButton.classList.toggle('on');
+            warpDriveButton.textContent = `High Speed Dubbing: ${isWarpOn ? 'ON' : 'OFF'}`;
+            
+            clearInterval(speedRampInterval);
+            
+            audioElement.preservesPitch = !isWarpOn;
+            
+            const startRate = audioElement.playbackRate;
+            const targetRate = isWarpOn ? 4.0 : speeds[currentSpeedIndex].rate;
+            const duration = 2000;
+            const startTime = performance.now();
+            
+            function step(timestamp) {
+                const elapsed = timestamp - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const currentRate = startRate + (targetRate - startRate) * progress;
+                
+                audioElement.playbackRate = currentRate;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                }
+            }
+            
+            requestAnimationFrame(step);
+        }
+
+        warpDriveButton.addEventListener('click', toggleWarpDrive);
+
+        // Audio Loading and Playback Functions
+        function loadAudio(file, index) {
+            if (!isPoweredOn) {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Please press the POWER button first.';
+                return;
+            }
+
+            if (audioElement) {
+                audioElement.pause();
+                if (source) source.disconnect();
+            }
+
+            currentTrackIndex = index;
+            audioElement = new Audio(URL.createObjectURL(file));
+            audioElement.volume = volume / 100;
+            trackInfo.textContent = file.name;
+            audioElement.playbackRate = speeds[currentSpeedIndex].rate;
+
+            audioElement.addEventListener('loadedmetadata', () => { 
+                updateTrackTime(); 
+                updatePlaylistUI(); 
+            });
+
+            audioElement.addEventListener('timeupdate', updateTrackTime);
+            audioElement.addEventListener('ended', () => { playNextTrack(); });
+
+            audioElement.addEventListener('canplay', () => {
+                try {
+                    source = audioCtx.createMediaElementSource(audioElement);
+                } catch (e) {
+                    console.error('createMediaElementSource failed:', e);
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = 'Browser audio context error.';
+                    return;
+                }
+
+                connectAudioChain();
+
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume().then(() => {
+                        audioElement.play().catch(err => {
+                            console.error('Error playing audio:', err);
+                            errorMessage.style.display = 'block';
+                            errorMessage.textContent = 'Failed to play audio.';
+                        });
+                    });
+                } else {
+                    audioElement.play().catch(err => {
+                        console.error('Error playing audio:', err);
+                        errorMessage.style.display = 'block';
+                        errorMessage.textContent = 'Failed to play audio.';
+                    });
+                }
+
+                playButton.textContent = '⏸⏸ PAUSE';
+            });
+
+            audioElement.addEventListener('error', () => {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Error loading audio file.';
+            });
+        }
+
+        // Track Time and Playlist Updates
+        function updateTrackTime() {
+            if (!audioElement) return;
+            const current = Math.floor(audioElement.currentTime);
+            const duration = Math.floor(audioElement.duration) || 0;
+            const currentMin = Math.floor(current / 60);
+            const currentSec = current % 60;
+            const durationMin = Math.floor(duration / 60);
+            const durationSec = duration % 60;
+            trackTime.textContent = `${currentMin}:${currentSec.toString().padStart(2,'0')} / ${durationMin}:${durationSec.toString().padStart(2,'0')}`;
+        }
+
+        function updatePlaylistUI() {
+            playlistContainer.innerHTML = '';
+            playlist.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'playlist-item';
+                if (index === currentTrackIndex) item.classList.add('active');
+                item.textContent = file.name;
+                item.addEventListener('click', () => { if (!isPoweredOn) return; loadAudio(file, index); });
+                playlistContainer.appendChild(item);
+            });
+
+            prevButton.disabled = !audioElement;
+            nextButton.disabled = !audioElement;
+        }
+
+        // Track Navigation Functions
+        function playNextTrack() {
+            if (playlist.length > 1 && currentTrackIndex < playlist.length - 1) {
+                loadAudio(playlist[currentTrackIndex + 1], currentTrackIndex + 1);
+            } else {
+                if (audioElement) audioElement.pause();
+                playButton.textContent = '▶ PLAY';
+                trackInfo.textContent = 'No track loaded';
+                trackTime.textContent = '0:00 / 0:00';
+                currentTrackIndex = -1;
+                updatePlaylistUI();
+            }
+        }
+
+        function playPreviousTrack() {
+            if (playlist.length > 1 && currentTrackIndex > 0) {
+                loadAudio(playlist[currentTrackIndex - 1], currentTrackIndex - 1);
+            } else if (audioElement) {
+                audioElement.currentTime = 0;
+                updateTrackTime();
+            }
+        }
+
+        function seekForward() { 
+            if (audioElement) { 
+                audioElement.currentTime = Math.min(audioElement.currentTime + 5, audioElement.duration); 
+                updateTrackTime(); 
+            } 
+        }
+        
+        function seekBackward() { 
+            if (audioElement) { 
+                audioElement.currentTime = Math.max(audioElement.currentTime - 5, 0); 
+                updateTrackTime(); 
+            } 
+        }
+
+        // File Input and Control Event Listeners
+        mp3Input.addEventListener('change', (event) => {
+            const files = Array.from(event.target.files).filter(file => file.type === 'audio/mpeg');
+            if (files.length === 0) {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Please select valid MP3 files.';
+                return;
+            }
+            playlist = files;
+            currentTrackIndex = 0;
+            loadAudio(playlist[0], 0);
+            updatePlaylistUI();
+        });
+
+        playButton.addEventListener('click', () => {
+            if (!isPoweredOn || !audioElement) return;
+            if (audioElement.paused) {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume().catch(err => {
+                        console.error('Error resuming AudioContext:', err);
+                        errorMessage.style.display = 'block';
+                        errorMessage.textContent = 'Please interact with the page to enable audio.';
+                    });
+                }
+                audioElement.play().catch(err => {
+                    console.error('Error playing audio:', err);
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = 'Failed to play audio.';
+                });
+                playButton.textContent = '⏸⏸ PAUSE';
+            } else {
+                audioElement.pause();
+                playButton.textContent = '▶ PLAY';
+            }
+        });
+
+        // Previous / Next Buttons (press-and-hold)
+        let timerFired = false;
+        prevButton.addEventListener('mousedown', () => {
+            if (!isPoweredOn || !audioElement) return;
+            timerFired = false;
+            pressTimer = setTimeout(() => { timerFired = true; seekInterval = setInterval(seekBackward, 200); }, 500);
+        });
+
+        prevButton.addEventListener('mouseup', () => {
+            clearTimeout(pressTimer);
+            clearInterval(seekInterval);
+            if (!timerFired && playlist.length > 1) playPreviousTrack();
+        });
+        prevButton.addEventListener('mouseleave', () => { clearTimeout(pressTimer); clearInterval(seekInterval); });
+
+        nextButton.addEventListener('mousedown', () => {
+            if (!isPoweredOn || !audioElement) return;
+            timerFired = false;
+            pressTimer = setTimeout(() => { timerFired = true; seekInterval = setInterval(seekForward, 200); }, 500);
+        });
+
+        nextButton.addEventListener('mouseup', () => {
+            clearTimeout(pressTimer);
+            clearInterval(seekInterval);
+            if (!timerFired && playlist.length > 1) playNextTrack();
+        });
+        nextButton.addEventListener('mouseleave', () => { clearTimeout(pressTimer); clearInterval(seekInterval); });
 
         // ============================================
         // Full Radio Station List
@@ -819,9 +1336,7 @@
             {"name":"Radio Osttirol","url":"http://streamplus20.leonex.de:28768/;"}
         ];
 
-        // ============================================
-        // Helper: stop and disconnect existing source
-        // ============================================
+        // Helper function to stop current source
         function stopCurrentSource() {
             try {
                 if (audioElement) {
@@ -842,57 +1357,7 @@
             }
         }
 
-        // ============================================
-        // Check station availability
-        // ============================================
-        async function checkStations() {
-            radioStation.innerHTML = '<option value="">Scanning for live stations...</option>';
-            const availableStations = [];
-
-            for (const station of radioStations) {
-                try {
-                    const testAudio = new Audio();
-                    testAudio.src = station.url;
-                    testAudio.crossOrigin = 'anonymous';
-
-                    await new Promise((resolve, reject) => {
-                        let fired = false;
-                        function cleanup() {
-                            testAudio.removeEventListener('loadedmetadata', onLoad);
-                            testAudio.removeEventListener('error', onError);
-                        }
-                        function onLoad() { if (!fired) { fired = true; cleanup(); resolve(); } }
-                        function onError() { if (!fired) { fired = true; cleanup(); reject(); } }
-                        testAudio.addEventListener('loadedmetadata', onLoad, { once: true });
-                        testAudio.addEventListener('error', onError, { once: true });
-                        setTimeout(() => { if (!fired) { fired = true; cleanup(); reject(); } }, 3000);
-                    });
-
-                    availableStations.push(station);
-                } catch (e) {
-                    console.warn('Station failed or timed out:', station.name);
-                }
-            }
-
-            radioStation.innerHTML = '';
-            const defaultOpt = document.createElement('option');
-            defaultOpt.value = '';
-            defaultOpt.textContent = availableStations.length ? 'Select a station...' : 'No stations available';
-            radioStation.appendChild(defaultOpt);
-
-            if (availableStations.length > 0) {
-                availableStations.forEach(station => {
-                    const opt = document.createElement('option');
-                    opt.value = station.url;
-                    opt.textContent = station.name;
-                    radioStation.appendChild(opt);
-                });
-            }
-        }
-
-        // ============================================
-        // Play a web radio stream
-        // ============================================
+        // Play radio stream function
         function playStream(url, displayName) {
             if (!isPoweredOn) {
                 errorMessage.style.display = 'block';
@@ -904,6 +1369,8 @@
             if (!audioCtx) {
                 initAudioContext();
             }
+            
+            // Stop any current audio (MP3 or radio)
             stopCurrentSource();
 
             audioElement = new Audio(url);
@@ -911,11 +1378,14 @@
             audioElement.volume = volume / 100;
             audioElement.playbackRate = speeds[currentSpeedIndex].rate;
             trackInfo.textContent = displayName || 'Radio Stream';
+            trackTime.textContent = 'LIVE STREAM';
 
             audioElement.addEventListener('error', (ev) => {
                 console.error('Radio stream error for', url, ev);
                 errorMessage.style.display = 'block';
                 errorMessage.textContent = 'Failed to load radio stream.';
+                trackInfo.textContent = 'Stream Error';
+                trackTime.textContent = '0:00 / 0:00';
             });
 
             audioElement.addEventListener('canplay', () => {
@@ -940,664 +1410,117 @@
                 }
 
                 playButton.textContent = '⏸⏸ PAUSE';
+                errorMessage.style.display = 'none';
             });
         }
 
+        // Radio station change event
         radioStation.addEventListener('change', (e) => {
             const url = e.target.value;
             const name = e.target.options[e.target.selectedIndex] ? e.target.options[e.target.selectedIndex].text : '';
             if (!url) return;
+            
+            // Clear playlist selection when switching to radio
+            currentTrackIndex = -1;
+            updatePlaylistUI();
+            
             playStream(url, name);
         });
-
+        
         // ============================================
-        // Audio Chain Connection
+        // MODIFIED CODE FOR INTERROGATION AND FILTERING
         // ============================================
-        function connectAudioChain() {
-            if (!source || !eqFilters || !masterGain || !tapeBiasFilter || !dolbyBFilter) return;
 
-            // Main audio path
-            source.connect(eqFilters[0]);
-            eqFilters[eqFilters.length - 1].connect(loudnessGainNode);
-            loudnessGainNode.connect(bassBoost);
-            bassBoost.connect(lowpass);
-            lowpass.connect(highpass);
+        /**
+         * Checks the activity of a single stream URL using an Audio element with a timeout.
+         * @param {Object} station - The station object with name and url.
+         * @returns {Promise<Object|boolean>} Resolves with the station object if active, otherwise resolves with false.
+         */
+        function checkStreamActivity(station) {
+            const TIMEOUT_MS = 5000; // 5 seconds timeout for connectivity check (INCREASED FROM 1500)
             
-            // Insert Tape Bias EQ and Dolby B NR before stereo panner
-            highpass.connect(tapeBiasFilter);
-            tapeBiasFilter.connect(dolbyBFilter);
+            return new Promise(resolve => {
+                const audio = new Audio();
+                let timer;
 
-            // Enhanced cassette chain (if active)
-            if (cassetteButton.classList.contains('on') && cassetteFilterLow && cassetteFilterHigh && compressionNode) {
-                // The tape bias and dolby filters should be AFTER the main cassette emulation, 
-                // so we insert them into the cassette chain
+                const cleanup = (result) => {
+                    clearTimeout(timer);
+                    audio.removeEventListener('canplay', handleSuccess);
+                    audio.removeEventListener('error', handleError);
+                    // Crucial: stop loading the stream immediately to save resources
+                    audio.src = ''; 
+                    audio.load();
+                    resolve(result);
+                };
+
+                const handleSuccess = () => cleanup(station);
+                const handleError = () => cleanup(false);
+
+                // Set up handlers
+                audio.addEventListener('canplay', handleSuccess);
+                audio.addEventListener('error', handleError);
                 
-                // Disconnect existing links from highpass
-                highpass.disconnect();
-                tapeBiasFilter.disconnect();
+                // Set the stream URL and begin loading
+                audio.src = station.url;
+                audio.load();
 
-                // Connect old source (highpass) to cassette chain
-                highpass.connect(cassetteFilterLow);
-                cassetteFilterLow.connect(cassetteFilterHigh);
-                cassetteFilterHigh.connect(compressionNode);
-                compressionNode.connect(compressionGain);
-                
-                // Connect cassette chain to tape bias filter, then dolby, then panner
-                compressionGain.connect(tapeBiasFilter);
-                tapeBiasFilter.connect(dolbyBFilter);
-                dolbyBFilter.connect(stereoPanner);
-
-            } else {
-                // If Cassette Mode is OFF, ensure it connects highpass -> tapeBias -> dolby -> panner
-                highpass.disconnect();
-                highpass.connect(tapeBiasFilter);
-                tapeBiasFilter.connect(dolbyBFilter);
-                dolbyBFilter.connect(stereoPanner);
-
-            }
-
-            // Connect to analyser and final gain
-            stereoPanner.connect(analyser);
-            analyser.connect(masterGain);
-            masterGain.connect(audioCtx.destination);
-
-            // Connect noise sources to analyser
-            if (noiseGainLow) noiseGainLow.connect(analyser);
-            if (noiseGainMid) noiseGainMid.connect(analyser);
+                // Set a timeout. If no 'canplay' or 'error' fires, we assume it failed or is too slow.
+                timer = setTimeout(handleError, TIMEOUT_MS);
+            });
         }
 
-        // ============================================
-        // Power Button Functionality
-        // ============================================
-        powerButton.addEventListener('click', () => {
-            isPoweredOn = !isPoweredOn;
-            hifiContainer.classList.toggle('off', !isPoweredOn);
-            powerButton.textContent = isPoweredOn ? 'POWER ON' : 'POWER OFF';
-            powerButton.classList.toggle('on', isPoweredOn);
-            powerLed.classList.toggle('on', isPoweredOn);
+        /**
+         * Interrogates the list of radio stations to populate the list with only active ones.
+         */
+        async function loadRadioStations() {
+            // Display message while checking
+            radioStation.innerHTML = '';
+            const loadingOpt = document.createElement('option');
+            loadingOpt.value = '';
+            loadingOpt.textContent = 'Checking for live stations (This may take a moment)...';
+            radioStation.appendChild(loadingOpt);
+            
+            // Create a promise for each station check
+            const checks = radioStations.map(station => checkStreamActivity(station));
+            
+            // Run all checks concurrently
+            const results = await Promise.all(checks);
+            
+            // Filter the active stations
+            const activeStations = results.filter(result => result !== false);
 
-            if (isPoweredOn) {
-                if (audioCtx && audioCtx.state === 'suspended') {
-                    audioCtx.resume().catch(err => {
-                        console.error('Error resuming AudioContext:', err);
-                        errorMessage.style.display = 'block';
-                        errorMessage.textContent = 'Please interact with the page to enable audio.';
-                    });
-                }
-                trackInfo.textContent = 'Crap-turon 5000 - Turning good sound to shit since 1988';
-                setTimeout(() => {
-                    trackInfo.textContent = 'No track loaded';
-                    if (playlist.length > 0 && currentTrackIndex >= 0) {
-                        trackInfo.textContent = playlist[currentTrackIndex].name;
-                    }
-                }, 5000);
+            // Clear the select and add the default option
+            radioStation.innerHTML = '';
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = activeStations.length > 0 ? 'Select a station...' : 'No live stations found.';
+            radioStation.appendChild(defaultOpt);
 
-                if (!audioCtx) {
-                    initAudioContext();
-                } else {
-                    // Re-apply effects on power up to ensure correct state is set
-                    applyTapeBiasEQ();
-                    toggleDolbyB();
-                    if (cassetteButton.classList.contains('on')) startEnhancedWowFlutter();
-                }
-            } else {
-                if (audioCtx) {
-                    audioCtx.suspend().catch(err => { console.error('Error suspending AudioContext:', err); });
-                }
-                stopEnhancedWowFlutter();
-
-                trackInfo.textContent = 'Crap-turon 5000 turning off';
-                setTimeout(() => { trackInfo.textContent = 'No track loaded'; }, 2000);
-
-                if (audioElement) {
-                    audioElement.pause();
-                    playButton.textContent = '▶ PLAY';
-                    trackTime.textContent = '0:00 / 0:00';
-                    if (source) source.disconnect();
-                    audioElement = null;
-                    source = null;
-                }
-            }
-            errorMessage.style.display = 'none';
-        });
-
-        // ============================================
-        // Volume Knob Functions (same as original)
-        // ============================================
-        function drawKnob() {
-            const centerX = knobCanvas.width / 2;
-            const centerY = knobCanvas.height / 2;
-            const radius = knobCanvas.width / 2 - 10;
-            const startAngle = (Math.PI / 180) * -140;
-            const endAngle = (Math.PI / 180) * 130;
-            const totalAngle = endAngle - startAngle;
-            const angle = startAngle + (totalAngle * (volume / 100));
-
-            knobCtx.clearRect(0, 0, knobCanvas.width, knobCanvas.height);
-
-            knobCtx.beginPath();
-            knobCtx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-            knobCtx.fillStyle = '#111';
-            knobCtx.fill();
-
-            knobCtx.beginPath();
-            knobCtx.arc(centerX, centerY, radius, startAngle, angle, false);
-            knobCtx.strokeStyle = '#ff4444';
-            knobCtx.lineWidth = 10;
-            knobCtx.stroke();
-
-            knobCtx.beginPath();
-            knobCtx.arc(centerX, centerY, radius - 15, 0, 2 * Math.PI, false);
-            knobCtx.fillStyle = '#333';
-            knobCtx.fill();
-            knobCtx.strokeStyle = '#555';
-            knobCtx.lineWidth = 2;
-            knobCtx.stroke();
-
-            const indicatorLength = radius - 15;
-            const indicatorX = centerX + indicatorLength * Math.cos(angle);
-            const indicatorY = centerY + indicatorLength * Math.sin(angle);
-            knobCtx.beginPath();
-            knobCtx.moveTo(centerX, centerY);
-            knobCtx.lineTo(indicatorX, indicatorY);
-            knobCtx.strokeStyle = '#ff4444';
-            knobCtx.lineWidth = 5;
-            knobCtx.stroke();
-
-            volumeDisplay.textContent = Math.round(volume);
+            // Populate the list with active stations
+            activeStations.forEach(station => {
+                const opt = document.createElement('option');
+                opt.value = station.url;
+                opt.textContent = station.name;
+                radioStation.appendChild(opt);
+            });
+            
+            // Log the result of the interrogation to the console
+            console.log('--- FM Radio Station Interrogation Result (Live Stream Check) ---');
+            console.log(`Checked ${radioStations.length} stations. Found ${activeStations.length} active/responsive stations.`);
+            console.log('Active Stations Array:', activeStations.map(s => s.name));
+            console.log('-----------------------------------------------------------------');
         }
-
-        function handleKnobInteraction(event) {
-            if (!isPoweredOn) return;
-            const rect = knobCanvas.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            const angle = Math.atan2(event.clientY - centerY, event.clientX - centerX);
-            let volumeAngle = angle * (180 / Math.PI);
-            const startLimit = -140;
-            const endLimit = 130;
-
-            if (volumeAngle < startLimit) { volumeAngle = startLimit; } else if (volumeAngle > endLimit) { volumeAngle = endLimit; }
-
-            volume = (volumeAngle - startLimit) * 100 / (endLimit - startLimit);
-
-            if (audioElement) { try { audioElement.volume = volume / 100; } catch (e) {} }
-
+        
+        // Canvas resize and initialization
+        function resizeCanvas() {
+            spectrumCanvas.width = spectrumCanvas.offsetWidth;
+            spectrumCanvas.height = spectrumCanvas.offsetHeight;
+            knobCanvas.width = 150;
+            knobCanvas.height = 150;
             drawKnob();
-            saveSettings();
         }
 
-        knobCanvas.addEventListener('mousedown', (event) => { if (!isPoweredOn) return; isDragging = true; handleKnobInteraction(event); });
-        document.addEventListener('mousemove', (event) => { if (isDragging) handleKnobInteraction(event); });
-        document.addEventListener('mouseup', () => { isDragging = false; });
-
-        // ============================================
-        // Audio Context Initialization
-        // ============================================
-        function initAudioContext() {
-            try {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
-                // Initialize master gain control
-                masterGain = audioCtx.createGain();
-
-                // Initialize analyzer
-                analyser = audioCtx.createAnalyser();
-                analyser.fftSize = 256;
-                const bufferLength = analyser.frequencyBinCount;
-                const dataArray = new Uint8Array(bufferLength);
-                drawSpectrum(dataArray, bufferLength);
-
-                // Create EQ filters
-                const frequencies = [31,62,125,250,500,1000,2000,4000,8000,12000];
-                eqFilters = frequencies.map(freq => {
-                    const filter = audioCtx.createBiquadFilter();
-                    filter.type = 'peaking';
-                    filter.frequency.value = freq;
-                    filter.Q.value = 1.4;
-                    filter.gain.value = 0;
-                    return filter;
-                });
-
-                // Connect EQ filters in series
-                for (let i=0;i<eqFilters.length-1;i++) {
-                    eqFilters[i].connect(eqFilters[i+1]);
-                }
-
-                // Other filters
-                lowpass = audioCtx.createBiquadFilter(); 
-                lowpass.type = 'lowpass'; 
-                lowpass.frequency.value = 20000; 
-                lowpass.Q.value = 1;
-                
-                highpass = audioCtx.createBiquadFilter(); 
-                highpass.type = 'highpass'; 
-                highpass.frequency.value = 20; 
-                highpass.Q.value = 1;
-                
-                bassBoost = audioCtx.createBiquadFilter(); 
-                bassBoost.type = 'lowshelf'; 
-                bassBoost.frequency.value = 40; 
-                bassBoost.gain.value = 0;
-                
-                loudnessGainNode = audioCtx.createGain(); 
-                loudnessGainNode.gain.value = 1;
-
-                // Old noise (keeping for compatibility)
-                const bufferSize = audioCtx.sampleRate;
-                const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const output = noiseBuffer.getChannelData(0);
-                for (let i=0;i<bufferSize;i++) output[i] = Math.random()*2 - 1;
-
-                noiseSource = audioCtx.createBufferSource();
-                noiseSource.buffer = noiseBuffer;
-                noiseSource.loop = true;
-                noiseSource.start();
-
-                noiseGainNode = audioCtx.createGain();
-                noiseGainNode.gain.value = 0;
-
-                stereoPanner = audioCtx.createStereoPanner();
-
-                noiseSource.connect(noiseGainNode);
-
-                // Create enhanced cassette effect chain (includes new tapeBiasFilter and dolbyBFilter)
-                createCassetteEffectChain();
-
-                // Load settings
-                loadSettings();
-
-                // Setup EQ slider listeners
-                const frequenciesArr = [31,62,125,250,500,1000,2000,4000,8000,12000];
-                eqSliders.forEach(slider => {
-                    slider.addEventListener('input', () => {
-                        if (!isPoweredOn) return;
-                        const freq = parseFloat(slider.dataset.freq);
-                        const index = frequenciesArr.indexOf(freq);
-                        if (index !== -1 && eqFilters[index]) {
-                            const value = parseFloat(slider.value);
-                            if (Math.abs(value) < 1) slider.value = 0;
-                            eqFilters[index].gain.value = parseFloat(slider.value);
-                            saveSettings();
-                        }
-                    });
-                });
-
-                setupEffectButtons();
-                
-                // Ensure initial tape type and dolby setting is applied to the new filters
-                applyTapeBiasEQ();
-                toggleDolbyB();
-
-            } catch (err) {
-                console.error('Error initializing audio context:', err);
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = 'Failed to initialize audio context. Please try again.';
-            }
-        }
-
-        // ============================================
-        // Enhanced Effect Button Setup
-        // ============================================
-        function setupEffectButtons() {
-            binatoneButton.addEventListener('click', () => {
-                if (!isPoweredOn) return;
-                const isOn = binatoneButton.classList.toggle('on');
-                binatoneButton.textContent = `Crap Bass Boost: ${isOn ? 'ON' : 'OFF'}`;
-                if (isOn) { 
-                    lowpass.frequency.value = 3000; 
-                    highpass.frequency.value = 300; 
-                } else { 
-                    lowpass.frequency.value = 20000; 
-                    highpass.frequency.value = 20; 
-                }
-            });
-
-            hyperbassButton.addEventListener('click', () => {
-                if (!isPoweredOn) return;
-                const isOn = hyperbassButton.classList.toggle('on');
-                hyperbassButton.textContent = `Hyper Bass: ${isOn ? 'ON' : 'OFF'}`;
-                if (bassBoost) {
-                    bassBoost.gain.value = isOn ? 5 : 0;
-                }
-                saveSettings();
-            });
-
-            cassetteButton.addEventListener('click', () => {
-                if (!isPoweredOn) return;
-                const isOn = cassetteButton.classList.toggle('on');
-                cassetteButton.textContent = `Cassette Mode: ${isOn ? 'ON' : 'OFF'}`;
-                cassetteControls.style.display = isOn ? 'block' : 'none';
-                
-                if (isOn) {
-                    applyCassetteQuality(cassetteQuality);
-                    applyTapeBiasEQ(); // Re-apply tape bias EQ when cassette mode is turned on
-                    startEnhancedWowFlutter();
-                    // Reconnect audio chain with cassette processing
-                    if (source) connectAudioChain();
-                } else {
-                    stopEnhancedWowFlutter();
-                    // Reset to normal frequencies
-                    if (cassetteFilterLow) cassetteFilterLow.frequency.value = 20;
-                    if (cassetteFilterHigh) cassetteFilterHigh.frequency.value = 20000;
-                    if (noiseGainLow) noiseGainLow.gain.value = 0;
-                    if (noiseGainMid) noiseGainMid.gain.value = 0;
-                    if (compressionGain) compressionGain.gain.value = 1;
-                    
-                    // Reset tape bias filter to 0 since it is not being applied when Cassette is OFF
-                    if (tapeBiasFilter) tapeBiasFilter.gain.value = 0;
-                    
-                    // Reconnect normal audio chain
-                    if (source) {
-                        try {
-                            // Disconnect cassette-specific connections
-                            cassetteFilterHigh.disconnect();
-                            compressionGain.disconnect();
-                            // Reconnect the main path: highpass -> tapeBias -> dolby -> panner
-                            connectAudioChain();
-                        } catch(e) { console.warn("Reconnection error:", e); }
-                    }
-                }
-            });
-
-            stereoWideButton.addEventListener('click', () => {
-                if (!isPoweredOn) return;
-                const isOn = stereoWideButton.classList.toggle('on');
-                stereoWideButton.textContent = `Stereo Wide: ${isOn ? 'ON' : 'OFF'}`;
-                if (stereoPanner) stereoPanner.pan.value = isOn ? 0.8 : 0;
-            });
-
-            speedButton.addEventListener('click', () => {
-                if (!isPoweredOn) return;
-                currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
-                const speedSetting = speeds[currentSpeedIndex];
-                speedButton.textContent = `Speed: ${speedSetting.label}`;
-                if (audioElement && !cassetteButton.classList.contains('on')) {
-                    audioElement.playbackRate = speedSetting.rate;
-                }
-            });
-
-            loudnessButton.addEventListener('click', () => {
-                if (!isPoweredOn) return;
-                const isOn = loudnessButton.classList.toggle('on');
-                loudnessButton.textContent = `Loudness: ${isOn ? 'ON' : 'OFF'}`;
-                if (loudnessGainNode) {
-                    loudnessGainNode.gain.value = isOn ? 1.2 : 1;
-                }
-                saveSettings();
-            });
-
-            // NEW: Tape Type Button Listener
-            tapeTypeButton.addEventListener('click', () => {
-                if (!isPoweredOn) return;
-                currentTapeTypeIndex = (currentTapeTypeIndex + 1) % tapeTypes.length;
-                applyTapeBiasEQ();
-            });
-            
-            // NEW: Dolby B Button Listener
-            dolbyButton.addEventListener('click', () => {
-                if (!isPoweredOn) return;
-                dolbyButton.classList.toggle('on');
-                toggleDolbyB();
-            });
-            
-            // Cassette quality buttons
-            document.querySelectorAll('.quality-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (!isPoweredOn) return;
-                    cassetteQuality = btn.dataset.quality;
-                    updateQualityButtons();
-                    if (cassetteButton.classList.contains('on')) {
-                        applyCassetteQuality(cassetteQuality);
-                    }
-                    saveSettings();
-                });
-            });
-
-            loadCdButton.addEventListener('mousedown', () => { if (!isPoweredOn) return; loadCdButton.classList.add('on'); });
-            loadCdButton.addEventListener('mouseup', () => { if (!isPoweredOn) return; loadCdButton.classList.remove('on'); });
-        }
-        
-        // NEW WARP DRIVE FUNCTIONALITY
-        function toggleWarpDrive() {
-            if (!isPoweredOn || !audioElement) return;
-
-            const isWarpOn = warpDriveButton.classList.toggle('on');
-            warpDriveButton.textContent = `High Speed Dubbing: ${isWarpOn ? 'ON' : 'OFF'}`;
-            
-            clearInterval(speedRampInterval); // Clear any existing ramp
-            
-            audioElement.preservesPitch = !isWarpOn; // Turn off pitch preservation when warping
-            
-            const startRate = audioElement.playbackRate;
-            const targetRate = isWarpOn ? 4.0 : speeds[currentSpeedIndex].rate;
-            const duration = 2000; // 2 seconds
-            const startTime = performance.now();
-            
-            function step(timestamp) {
-                const elapsed = timestamp - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const currentRate = startRate + (targetRate - startRate) * progress;
-                
-                audioElement.playbackRate = currentRate;
-                
-                if (progress < 1) {
-                    requestAnimationFrame(step);
-                }
-            }
-            
-            requestAnimationFrame(step);
-        }
-
-        warpDriveButton.addEventListener('click', toggleWarpDrive);
-        // END NEW WARP DRIVE FUNCTIONALITY
-
-
-        // ============================================
-        // Audio Loading and Playback Functions
-        // ============================================
-        function loadAudio(file, index) {
-            if (!isPoweredOn) {
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = 'Please press the POWER button first.';
-                return;
-            }
-
-            if (audioElement) {
-                audioElement.pause();
-                if (source) source.disconnect();
-            }
-
-            currentTrackIndex = index;
-            audioElement = new Audio(URL.createObjectURL(file));
-            audioElement.volume = volume / 100;
-            trackInfo.textContent = file.name;
-            audioElement.playbackRate = speeds[currentSpeedIndex].rate;
-
-            audioElement.addEventListener('loadedmetadata', () => { 
-                updateTrackTime(); 
-                updatePlaylistUI(); 
-            });
-
-            audioElement.addEventListener('timeupdate', updateTrackTime);
-            audioElement.addEventListener('ended', () => { playNextTrack(); });
-
-            audioElement.addEventListener('canplay', () => {
-                try {
-                    source = audioCtx.createMediaElementSource(audioElement);
-                } catch (e) {
-                    console.error('createMediaElementSource failed:', e);
-                    errorMessage.style.display = 'block';
-                    errorMessage.textContent = 'Browser audio context error.';
-                    return;
-                }
-
-                connectAudioChain();
-
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume().then(() => {
-                        audioElement.play().catch(err => {
-                            console.error('Error playing audio:', err);
-                            errorMessage.style.display = 'block';
-                            errorMessage.textContent = 'Failed to play audio.';
-                        });
-                    });
-                } else {
-                    audioElement.play().catch(err => {
-                        console.error('Error playing audio:', err);
-                        errorMessage.style.display = 'block';
-                        errorMessage.textContent = 'Failed to play audio.';
-                    });
-                }
-
-                playButton.textContent = '⏸⏸ PAUSE';
-            });
-
-            audioElement.addEventListener('error', () => {
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = 'Error loading audio file.';
-            });
-        }
-
-        // ============================================
-        // Track Time and Playlist Updates
-        // ============================================
-        function updateTrackTime() {
-            if (!audioElement) return;
-            const current = Math.floor(audioElement.currentTime);
-            const duration = Math.floor(audioElement.duration) || 0;
-            const currentMin = Math.floor(current / 60);
-            const currentSec = current % 60;
-            const durationMin = Math.floor(duration / 60);
-            const durationSec = duration % 60;
-            trackTime.textContent = `${currentMin}:${currentSec.toString().padStart(2,'0')} / ${durationMin}:${durationSec.toString().padStart(2,'0')}`;
-        }
-
-        function updatePlaylistUI() {
-            playlistContainer.innerHTML = '';
-            playlist.forEach((file, index) => {
-                const item = document.createElement('div');
-                item.className = 'playlist-item';
-                if (index === currentTrackIndex) item.classList.add('active');
-                item.textContent = file.name;
-                item.addEventListener('click', () => { if (!isPoweredOn) return; loadAudio(file, index); });
-                playlistContainer.appendChild(item);
-            });
-
-            prevButton.disabled = !audioElement;
-            nextButton.disabled = !audioElement;
-        }
-
-        // ============================================
-        // Track Navigation Functions
-        // ============================================
-        function playNextTrack() {
-            if (playlist.length > 1 && currentTrackIndex < playlist.length - 1) {
-                loadAudio(playlist[currentTrackIndex + 1], currentTrackIndex + 1);
-            } else {
-                if (audioElement) audioElement.pause();
-                playButton.textContent = '▶ PLAY';
-                trackInfo.textContent = 'No track loaded';
-                trackTime.textContent = '0:00 / 0:00';
-                currentTrackIndex = -1;
-                updatePlaylistUI();
-            }
-        }
-
-        function playPreviousTrack() {
-            if (playlist.length > 1 && currentTrackIndex > 0) {
-                loadAudio(playlist[currentTrackIndex - 1], currentTrackIndex - 1);
-            } else if (audioElement) {
-                audioElement.currentTime = 0;
-                updateTrackTime();
-            }
-        }
-
-        function seekForward() { 
-            if (audioElement) { 
-                audioElement.currentTime = Math.min(audioElement.currentTime + 5, audioElement.duration); 
-                updateTrackTime(); 
-            } 
-        }
-        
-        function seekBackward() { 
-            if (audioElement) { 
-                audioElement.currentTime = Math.max(audioElement.currentTime - 5, 0); 
-                updateTrackTime(); 
-            } 
-        }
-
-        // ============================================
-        // File Input and Control Event Listeners
-        // ============================================
-        mp3Input.addEventListener('change', (event) => {
-            const files = Array.from(event.target.files).filter(file => file.type === 'audio/mpeg');
-            if (files.length === 0) {
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = 'Please select valid MP3 files.';
-                return;
-            }
-            playlist = files;
-            currentTrackIndex = 0;
-            loadAudio(playlist[0], 0);
-            updatePlaylistUI();
-        });
-
-        playButton.addEventListener('click', () => {
-            if (!isPoweredOn || !audioElement) return;
-            if (audioElement.paused) {
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume().catch(err => {
-                        console.error('Error resuming AudioContext:', err);
-                        errorMessage.style.display = 'block';
-                        errorMessage.textContent = 'Please interact with the page to enable audio.';
-                    });
-                }
-                audioElement.play().catch(err => {
-                    console.error('Error playing audio:', err);
-                    errorMessage.style.display = 'block';
-                    errorMessage.textContent = 'Failed to play audio.';
-                });
-                playButton.textContent = '⏸⏸ PAUSE';
-            } else {
-                audioElement.pause();
-                playButton.textContent = '▶ PLAY';
-            }
-        });
-
-        // ============================================
-        // Previous / Next Buttons (press-and-hold)
-        // ============================================
-        let timerFired = false;
-        prevButton.addEventListener('mousedown', () => {
-            if (!isPoweredOn || !audioElement) return;
-            timerFired = false;
-            pressTimer = setTimeout(() => { timerFired = true; seekInterval = setInterval(seekBackward, 200); }, 500);
-        });
-
-        prevButton.addEventListener('mouseup', () => {
-            clearTimeout(pressTimer);
-            clearInterval(seekInterval);
-            if (!timerFired && playlist.length > 1) playPreviousTrack();
-        });
-        prevButton.addEventListener('mouseleave', () => { clearTimeout(pressTimer); clearInterval(seekInterval); });
-
-        nextButton.addEventListener('mousedown', () => {
-            if (!isPoweredOn || !audioElement) return;
-            timerFired = false;
-            pressTimer = setTimeout(() => { timerFired = true; seekInterval = setInterval(seekForward, 200); }, 500);
-        });
-
-        nextButton.addEventListener('mouseup', () => {
-            clearTimeout(pressTimer);
-            clearInterval(seekInterval);
-            if (!timerFired && playlist.length > 1) playNextTrack();
-        });
-        nextButton.addEventListener('mouseleave', () => { clearTimeout(pressTimer); clearInterval(seekInterval); });
-
-        // ============================================
-        // Spectrum Analyzer Functions
-        // ============================================
+        // Spectrum analyzer
         function drawSpectrum(dataArray, bufferLength) {
             if (!isPoweredOn) {
                 spectrumCtx.fillStyle = '#1e1e1e';
@@ -1628,34 +1551,26 @@
             }
         }
 
-        // ============================================
-        // Canvas Resize and Initialization
-        // ============================================
-        function resizeCanvas() {
-            spectrumCanvas.width = spectrumCanvas.offsetWidth;
-            spectrumCanvas.height = spectrumCanvas.offsetHeight;
-            knobCanvas.width = 150;
-            knobCanvas.height = 150;
-            drawKnob();
-        }
-
         window.addEventListener('resize', resizeCanvas);
 
-        // ============================================
         // Initialization
-        // ============================================
         resizeCanvas();
         hifiContainer.classList.add('off');
         loadSettings();
-
-        // Kick off station checks once page loads
-        window.addEventListener('load', () => {
-            radioStation.innerHTML = '<option value="">Checking stations...</option>';
-            checkStations().catch(err => {
-                console.error('checkStations error:', err);
-                radioStation.innerHTML = '<option value="">No stations available</option>';
-            });
-        });
+        
+        // Load radio stations after DOM is ready
+        // MODIFIED: Run loadRadioStations in a 0ms timeout to ensure it runs
+        // *after* the browser has finished painting the initial UI, preventing jank.
+        const runRadioLoadInBackground = () => {
+            setTimeout(loadRadioStations, 0);
+        };
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', runRadioLoadInBackground);
+        } else {
+            runRadioLoadInBackground();
+        }
+        
     </script>
 </body>
 </html>
