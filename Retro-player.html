@@ -198,7 +198,9 @@
                 <button class="button-effect" id="speedButton">Speed: Normal</button>
                 <button class="button-effect" id="loudnessButton">Loudness: OFF</button>
                 <button class="button-effect" id="cassetteButton">Cassette Mode: OFF</button>
-            </div>
+                <button class="button-effect" id="tapeTypeButton">Tape Type: Normal</button>
+                <button class="button-effect" id="dolbyButton">Dolby B Type: OFF</button>
+                </div>
 
             <div class="cassette-controls" id="cassetteControls" style="display:none; width:100%;">
                 <h4>Cassette Quality Settings</h4>
@@ -260,12 +262,24 @@
         const eqSliders = document.querySelectorAll('.eq-slider');
         const cassetteControls = document.getElementById('cassetteControls');
         const warpDriveButton = document.getElementById('warpDriveButton');
+        
+        // NEW CONTROL ELEMENTS
+        const tapeTypeButton = document.getElementById('tapeTypeButton');
+        const dolbyButton = document.getElementById('dolbyButton');
+        
+        // NEW STATE VARIABLES
+        const tapeTypes = ['Normal', 'Chrome', 'Metal'];
+        let currentTapeTypeIndex = 0;
+        let isDolbyBOn = false;
 
         // Radio Element
         const radioStation = document.getElementById('radioStation');
 
         // Audio Context Variables
         let audioCtx, analyser, audioElement, source, eqFilters, lowpass, highpass, bassBoost, noiseSource, noiseGainNode, stereoPanner, loudnessGainNode, masterGain;
+        
+        // NEW AUDIO CONTEXT NODES
+        let tapeBiasFilter, dolbyBFilter;
 
         // Playlist Variables
         let playlist = [];
@@ -409,6 +423,18 @@
             cassetteFilterHigh.type = 'lowpass';
             cassetteFilterHigh.frequency.value = 12000;
             cassetteFilterHigh.Q.value = 0.7;
+            
+            // NEW: Tape Bias Filter (for Normal/Chrome/Metal)
+            tapeBiasFilter = audioCtx.createBiquadFilter();
+            tapeBiasFilter.type = 'highshelf'; // Used for high-frequency EQ changes
+            tapeBiasFilter.frequency.value = 10000; // Affects frequencies above 10kHz
+            tapeBiasFilter.gain.value = 0; // Starts at normal
+
+            // NEW: Dolby B Filter (for high-frequency noise reduction)
+            dolbyBFilter = audioCtx.createBiquadFilter();
+            dolbyBFilter.type = 'highshelf';
+            dolbyBFilter.frequency.value = 5000; // Affects frequencies above 5kHz
+            dolbyBFilter.gain.value = 0; // Starts off
 
             // Connect noise sources to analyser
             noiseSourceLow.connect(noiseGainLow);
@@ -524,6 +550,54 @@
                 wowFlutterAnimationId = null;
             }
         }
+        
+        // NEW: Tape Bias EQ Function
+        function applyTapeBiasEQ() {
+            if (!tapeBiasFilter || !audioCtx) return;
+            
+            let gain = 0; // Normal tape (Type I) has no extra EQ change
+            const tapeType = tapeTypes[currentTapeTypeIndex];
+            tapeTypeButton.textContent = `Tape Type: ${tapeType}`;
+
+            // Simulating high-frequency playback EQ differences
+            if (tapeType === 'Chrome') {
+                // Chrome (Type II) is often recorded with less high-frequency pre-emphasis, 
+                // so playback equalization has less boost, resulting in a naturally brighter sound.
+                // We simulate this lower boost by applying a negative gain.
+                gain = -3; // -3dB high-shelf cut
+            } else if (tapeType === 'Metal') {
+                // Metal (Type IV) is similar to Chrome, but sometimes with a slightly flatter curve.
+                gain = -2; // -2dB high-shelf cut
+            }
+            
+            // If Cassette Mode is OFF, the tape type button still updates but doesn't apply the effect.
+            if (cassetteButton.classList.contains('on')) {
+                tapeBiasFilter.gain.setValueAtTime(gain, audioCtx.currentTime);
+            } else {
+                tapeBiasFilter.gain.setValueAtTime(0, audioCtx.currentTime);
+            }
+            
+            saveSettings();
+        }
+        
+        // NEW: Dolby B Noise Reduction Function
+        function toggleDolbyB() {
+            if (!dolbyBFilter || !audioCtx) return;
+            
+            isDolbyBOn = dolbyButton.classList.contains('on');
+            dolbyButton.textContent = `Dolby B Type: ${isDolbyBOn ? 'ON' : 'OFF'}`;
+
+            if (isDolbyBOn) {
+                // Dolby B reduces noise by expanding the high frequencies (reducing gain) on playback.
+                // We simulate the noise reduction effect by reducing high-frequency gain.
+                dolbyBFilter.gain.setValueAtTime(-10, audioCtx.currentTime); // -10dB high-shelf cut
+            } else {
+                dolbyBFilter.gain.setValueAtTime(0, audioCtx.currentTime);
+            }
+            
+            saveSettings();
+        }
+
 
         // ============================================
         // LocalStorage Functions
@@ -536,7 +610,10 @@
                     hyperBassOn: hyperbassButton.classList.contains('on'),
                     equalizer: Array.from(eqSliders).map(slider => parseFloat(slider.value)),
                     loudnessOn: loudnessButton.classList.contains('on'),
-                    cassetteQuality: cassetteQuality
+                    cassetteQuality: cassetteQuality,
+                    // NEW SETTINGS
+                    currentTapeTypeIndex: currentTapeTypeIndex,
+                    isDolbyBOn: dolbyButton.classList.contains('on')
                 };
                 localStorage.setItem('crapTuronSettings', JSON.stringify(settings));
             } catch (e) {
@@ -591,6 +668,24 @@
                     if (settings.cassetteQuality) {
                         cassetteQuality = settings.cassetteQuality;
                         updateQualityButtons();
+                    }
+                    
+                    // NEW: Restore Tape Type
+                    if (settings.currentTapeTypeIndex !== undefined) {
+                        currentTapeTypeIndex = settings.currentTapeTypeIndex;
+                        // Button text update is done in applyTapeBiasEQ on init
+                    }
+                    
+                    // NEW: Restore Dolby B
+                    if (settings.isDolbyBOn) {
+                        dolbyButton.classList.add('on');
+                        // Effect application is done in toggleDolbyB on init
+                    }
+                    
+                    // Apply effects based on loaded state (needs audioCtx to be ready)
+                    if (audioCtx) {
+                        applyTapeBiasEQ(); // Applies the correct text and initial EQ
+                        toggleDolbyB();    // Applies the correct text and initial EQ
                     }
                 }
             } catch (e) {
@@ -859,7 +954,7 @@
         // Audio Chain Connection
         // ============================================
         function connectAudioChain() {
-            if (!source || !eqFilters || !masterGain) return;
+            if (!source || !eqFilters || !masterGain || !tapeBiasFilter || !dolbyBFilter) return;
 
             // Main audio path
             source.connect(eqFilters[0]);
@@ -867,17 +962,38 @@
             loudnessGainNode.connect(bassBoost);
             bassBoost.connect(lowpass);
             lowpass.connect(highpass);
-            highpass.connect(stereoPanner);
+            
+            // Insert Tape Bias EQ and Dolby B NR before stereo panner
+            highpass.connect(tapeBiasFilter);
+            tapeBiasFilter.connect(dolbyBFilter);
 
             // Enhanced cassette chain (if active)
             if (cassetteButton.classList.contains('on') && cassetteFilterLow && cassetteFilterHigh && compressionNode) {
-                // Disconnect old chain and insert cassette processing
+                // The tape bias and dolby filters should be AFTER the main cassette emulation, 
+                // so we insert them into the cassette chain
+                
+                // Disconnect existing links from highpass
                 highpass.disconnect();
+                tapeBiasFilter.disconnect();
+
+                // Connect old source (highpass) to cassette chain
                 highpass.connect(cassetteFilterLow);
                 cassetteFilterLow.connect(cassetteFilterHigh);
                 cassetteFilterHigh.connect(compressionNode);
                 compressionNode.connect(compressionGain);
-                compressionGain.connect(stereoPanner);
+                
+                // Connect cassette chain to tape bias filter, then dolby, then panner
+                compressionGain.connect(tapeBiasFilter);
+                tapeBiasFilter.connect(dolbyBFilter);
+                dolbyBFilter.connect(stereoPanner);
+
+            } else {
+                // If Cassette Mode is OFF, ensure it connects highpass -> tapeBias -> dolby -> panner
+                highpass.disconnect();
+                highpass.connect(tapeBiasFilter);
+                tapeBiasFilter.connect(dolbyBFilter);
+                dolbyBFilter.connect(stereoPanner);
+
             }
 
             // Connect to analyser and final gain
@@ -918,6 +1034,11 @@
 
                 if (!audioCtx) {
                     initAudioContext();
+                } else {
+                    // Re-apply effects on power up to ensure correct state is set
+                    applyTapeBiasEQ();
+                    toggleDolbyB();
+                    if (cassetteButton.classList.contains('on')) startEnhancedWowFlutter();
                 }
             } else {
                 if (audioCtx) {
@@ -1080,7 +1201,7 @@
 
                 noiseSource.connect(noiseGainNode);
 
-                // Create enhanced cassette effect chain
+                // Create enhanced cassette effect chain (includes new tapeBiasFilter and dolbyBFilter)
                 createCassetteEffectChain();
 
                 // Load settings
@@ -1103,6 +1224,11 @@
                 });
 
                 setupEffectButtons();
+                
+                // Ensure initial tape type and dolby setting is applied to the new filters
+                applyTapeBiasEQ();
+                toggleDolbyB();
+
             } catch (err) {
                 console.error('Error initializing audio context:', err);
                 errorMessage.style.display = 'block';
@@ -1145,6 +1271,7 @@
                 
                 if (isOn) {
                     applyCassetteQuality(cassetteQuality);
+                    applyTapeBiasEQ(); // Re-apply tape bias EQ when cassette mode is turned on
                     startEnhancedWowFlutter();
                     // Reconnect audio chain with cassette processing
                     if (source) connectAudioChain();
@@ -1156,12 +1283,19 @@
                     if (noiseGainLow) noiseGainLow.gain.value = 0;
                     if (noiseGainMid) noiseGainMid.gain.value = 0;
                     if (compressionGain) compressionGain.gain.value = 1;
+                    
+                    // Reset tape bias filter to 0 since it is not being applied when Cassette is OFF
+                    if (tapeBiasFilter) tapeBiasFilter.gain.value = 0;
+                    
                     // Reconnect normal audio chain
                     if (source) {
                         try {
-                            highpass.disconnect();
-                            highpass.connect(stereoPanner);
-                        } catch(e) {}
+                            // Disconnect cassette-specific connections
+                            cassetteFilterHigh.disconnect();
+                            compressionGain.disconnect();
+                            // Reconnect the main path: highpass -> tapeBias -> dolby -> panner
+                            connectAudioChain();
+                        } catch(e) { console.warn("Reconnection error:", e); }
                     }
                 }
             });
@@ -1193,6 +1327,20 @@
                 saveSettings();
             });
 
+            // NEW: Tape Type Button Listener
+            tapeTypeButton.addEventListener('click', () => {
+                if (!isPoweredOn) return;
+                currentTapeTypeIndex = (currentTapeTypeIndex + 1) % tapeTypes.length;
+                applyTapeBiasEQ();
+            });
+            
+            // NEW: Dolby B Button Listener
+            dolbyButton.addEventListener('click', () => {
+                if (!isPoweredOn) return;
+                dolbyButton.classList.toggle('on');
+                toggleDolbyB();
+            });
+            
             // Cassette quality buttons
             document.querySelectorAll('.quality-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
