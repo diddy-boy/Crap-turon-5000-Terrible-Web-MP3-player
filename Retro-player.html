@@ -907,35 +907,55 @@
                 saveSettings();
             });
 
-            cassetteButton.addEventListener('click', () => {
-                if (!isPoweredOn) return;
-                const isOn = cassetteButton.classList.toggle('on');
-                cassetteButton.textContent = `Cassette Mode: ${isOn ? 'ON' : 'OFF'}`;
-                cassetteControls.style.display = isOn ? 'block' : 'none';
-                
-                if (isOn) {
-                    applyCassetteQuality(cassetteQuality);
-                    applyTapeBiasEQ();
-                    startEnhancedWowFlutter();
-                    if (source) connectAudioChain();
-                } else {
-                    stopEnhancedWowFlutter();
-                    if (cassetteFilterLow) cassetteFilterLow.frequency.value = 20;
-                    if (cassetteFilterHigh) cassetteFilterHigh.frequency.value = 20000;
-                    if (noiseGainLow) noiseGainLow.gain.value = 0;
-                    if (noiseGainMid) noiseGainMid.gain.value = 0;
-                    if (compressionGain) compressionGain.gain.value = 1;
-                    if (tapeBiasFilter) tapeBiasFilter.gain.value = 0;
-                    
-                    if (source) {
-                        try {
-                            cassetteFilterHigh.disconnect();
-                            compressionGain.disconnect();
-                            connectAudioChain();
-                        } catch(e) { console.warn("Reconnection error:", e); }
-                    }
-                }
-            });
+            // ... (around line 430)
+
+      cassetteButton.addEventListener('click', () => {
+          if (!isPoweredOn) return;
+          const isOn = cassetteButton.classList.toggle('on');
+    cassetteButton.textContent = `Cassette Mode: ${isOn ? 'ON' : 'OFF'}`;
+    cassetteControls.style.display = isOn ? 'block' : 'none';
+    
+          if (isOn) {
+        applyCassetteQuality(cassetteQuality);
+        applyTapeBiasEQ();
+          if (audioElement) {
+            audioElement.preservesPitch = false; 
+            connectAudioChain();
+        }
+        startEnhancedWowFlutter();
+        } else {
+        // --- CASSETTE MODE OFF: RESTORE CLEAN AUDIO STATE ---
+        
+        stopEnhancedWowFlutter();
+
+        if (audioElement) {
+            audioElement.playbackRate = speeds[currentSpeedIndex].rate;
+            
+            if (!warpDriveButton.classList.contains('on')) {
+                audioElement.preservesPitch = true;
+            }
+        }
+        
+        if (cassetteFilterLow) cassetteFilterLow.frequency.value = 20;
+        if (cassetteFilterHigh) cassetteFilterHigh.frequency.value = 20000;
+        if (noiseGainLow) noiseGainLow.gain.value = 0;
+        if (noiseGainMid) noiseGainMid.gain.value = 0;
+        if (compressionGain) compressionGain.gain.value = 1;
+        if (tapeBiasFilter) tapeBiasFilter.gain.value = 0;
+        
+        if (source) {
+            // Reconnect the audio chain to bypass the cassette-specific nodes
+            try {
+                // Ensure the cassette nodes are disconnected before calling connectAudioChain
+                // which sets up the non-cassette chain.
+                if (cassetteFilterHigh) cassetteFilterHigh.disconnect();
+                if (compressionGain) compressionGain.disconnect();
+                connectAudioChain();
+            } catch(e) { console.warn("Reconnection error:", e); }
+          }
+        }
+        saveSettings();
+        });
 
             stereoWideButton.addEventListener('click', () => {
                 if (!isPoweredOn) return;
@@ -950,6 +970,7 @@
                 const speedSetting = speeds[currentSpeedIndex];
                 speedButton.textContent = `Speed: ${speedSetting.label}`;
                 if (audioElement && !cassetteButton.classList.contains('on')) {
+                    audioElement.preservesPitch = false;
                     audioElement.playbackRate = speedSetting.rate;
                 }
             });
@@ -963,6 +984,8 @@
                 }
                 saveSettings();
             });
+
+            warpDriveButton.addEventListener('click', toggleWarpDrive);
 
             tapeTypeButton.addEventListener('click', () => {
                 if (!isPoweredOn) return;
@@ -1000,20 +1023,35 @@
             
             clearInterval(speedRampInterval);
             
-            audioElement.preservesPitch = !isWarpOn;
-            
             const startRate = audioElement.playbackRate;
             const targetRate = isWarpOn ? 4.0 : speeds[currentSpeedIndex].rate;
             const duration = 2000;
             const startTime = performance.now();
             
+            const targetPitchPreservation = !isWarpOn; 
+
             function step(timestamp) {
                 const elapsed = timestamp - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                const currentRate = startRate + (targetRate - startRate) * progress;
                 
+                // 1. Ramp the playback rate
+                const currentRate = startRate + (targetRate - startRate) * progress;
                 audioElement.playbackRate = currentRate;
                 
+                // 2. Control pitch preservation during the ramp
+                if (isWarpOn) {
+                    // When turning ON: Set pitch preservation off immediately
+                    audioElement.preservesPitch = false; 
+                } else {
+                    // When turning OFF: Keep pitch preservation off while ramping down, 
+                    // and only turn it ON when the ramp is complete (progress === 1).
+                    if (progress === 1) {
+                        audioElement.preservesPitch = targetPitchPreservation;
+                    } else {
+                        audioElement.preservesPitch = false;
+                    }
+                }
+
                 if (progress < 1) {
                     requestAnimationFrame(step);
                 }
@@ -1021,8 +1059,6 @@
             
             requestAnimationFrame(step);
         }
-
-        warpDriveButton.addEventListener('click', toggleWarpDrive);
 
         // Audio Loading and Playback Functions
         function loadAudio(file, index) {
@@ -1056,8 +1092,8 @@
                     source = audioCtx.createMediaElementSource(audioElement);
                 } catch (e) {
                     console.error('createMediaElementSource failed:', e);
-                    errorMessage.style.display = 'block';
-                    errorMessage.textContent = 'Browser audio context error.';
+                    //errorMessage.style.display = 'block';
+                    //errorMessage.textContent = 'Browser audio context error.';
                     return;
                 }
 
@@ -1426,16 +1462,7 @@
             
             playStream(url, name);
         });
-        
-        // ============================================
-        // MODIFIED CODE FOR INTERROGATION AND FILTERING
-        // ============================================
 
-        /**
-         * Checks the activity of a single stream URL using an Audio element with a timeout.
-         * @param {Object} station - The station object with name and url.
-         * @returns {Promise<Object|boolean>} Resolves with the station object if active, otherwise resolves with false.
-         */
         function checkStreamActivity(station) {
             const TIMEOUT_MS = 5000; // 5 seconds timeout for connectivity check (INCREASED FROM 1500)
             
