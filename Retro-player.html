@@ -3,78 +3,411 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Crap-turon 5000 LoFi Player - Enhanced Cassette</title>
+    <title>Crap-turon 5000 - 90's Hi-Fi System</title>
     <style>
-        body { background: #1a1a1a; margin: 0; font-family: 'Arial Narrow', Arial, sans-serif; }
-        .hifi-container { max-width: 900px; margin: 30px auto; padding: 25px; background: linear-gradient(145deg, #2b2b2b, #404040); border: 4px solid #555; border-radius: 12px; box-shadow: inset 0 0 15px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.7); color:#d0d0d0; transition: filter 0.3s; position: relative }
-        .hifi-container.off { filter: brightness(0.5); pointer-events: none; }
-        .hifi-container.off .power-button { pointer-events: auto; }
-        .section { border:3px solid #666; padding:20px; margin-bottom:15px; background: linear-gradient(180deg,#3a3a3a,#2e2e2e); border-radius:8px; box-shadow: inset 0 2px 8px rgba(0,0,0,0.8), 0 2px 5px rgba(0,0,0,0.5); }
-        .power-volume { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-        .power-button { background: linear-gradient(145deg,#5a5a5a,#383838); border:2px solid #777; border-radius:6px; padding:12px 24px; color:#fff; font-size:18px; font-weight:bold; text-shadow:0 1px 3px rgba(0,0,0,0.6); cursor:pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.2); transition: box-shadow 0.1s ease-in-out; }
-        .power-button.on { box-shadow: inset 0 3px 6px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.1); }
-        .power-button:hover { background: linear-gradient(145deg,#6a6a6a,#484848); }
-        .power-led { width:10px; height:10px; background:#333; border:1px solid #666; border-radius:50%; margin-top:10px; box-shadow: inset 0 0 3px rgba(0,0,0,0.8); transition: box-shadow 0.3s, background-color 0.3s; }
-        .power-led.on { background-color:#44ff44; box-shadow: 0 0 10px #44ff44, inset 0 0 5px #44ff44; }
-        .volume-control { flex-grow:1; text-align:center; position:relative; }
-        .volume-label { font-size:16px; text-transform:uppercase; margin-bottom:8px; color:#b0b0b0; text-shadow:0 1px 2px rgba(0,0,0,0.5); }
-        .knob-container { position:relative; width:150px; height:150px; margin:0 auto; }
-        canvas.knob { width:100%; height:100%; cursor:pointer; display:block; }
-        .volume-display { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:24px; font-weight:bold; color:#fff; text-shadow:0 0 5px #ff4444; pointer-events:none; }
-        .knob-scale { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:170px; height:170px; border-radius:50%; pointer-events:none; }
-        .brand-name { font-family:'Courier New', monospace; font-size:24px; font-weight:bold; color:#44ff44; text-shadow:0 0 5px rgba(68,255,68,0.7); letter-spacing:2px; position: absolute; top: 0; right: 0; }
-        .cd-panel { background:#1e1e1e; padding:15px; border-radius:6px; margin:15px 0; box-shadow: inset 0 0 8px rgba(0,0,0,0.9); border:2px solid #555; justify-content: center; }
-        .cd-panel input[type="file"] { display:none; }
-        .button-effect { background: linear-gradient(145deg,#5a5a5a,#383838); border:2px solid #777; color:#fff; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:16px; text-shadow:0 1px 2px rgba(0,0,0,0.6); box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.2); transition: box-shadow 0.1s; width:95%; display:block; text-align:left; }
-        .button-effect.on { box-shadow: inset 0 3px 6px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.1); }
-        .button-effect:hover { background: linear-gradient(145deg,#6a6a6a,#484848); }
-        .track-info { margin:15px 0; padding:8px; background:#0a2a0a; color:#00ff00; font-family:'Courier New', monospace; border:2px solid #444; border-radius:4px; box-shadow: inset 0 0 5px rgba(0,255,0,0.3); }
-        .track-time { margin:10px 0; padding:8px; background:#0a2a0a; color:#00ff00; font-family:'Courier New', monospace; border:2px solid #444; border-radius:4px; box-shadow: inset 0 0 5px rgba(0,255,0,0.3); }
-        .transport-controls button { background: linear-gradient(145deg,#5a5a5a,#383838); border:2px solid #777; color:#fff; padding:10px 20px; margin:8px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:16px; text-shadow:0 1px 2px rgba(0,0,0,0.6); box-shadow:0 3px 6px rgba(0,0,0,0.5); }
-        .transport-controls button:disabled { background: linear-gradient(145deg,#333,#222); color:#666; cursor:not-allowed; box-shadow:none; }
-        .transport-controls button:hover:not(:disabled) { background: linear-gradient(145deg,#6a6a6a,#484848); }
-		.station-list { background-color: grey; color: white; }
-		.fm-radio-box select { width: 97%; }
-        .equalizer { display:flex; justify-content:space-between; align-items:center; height:140px; background:#252525; padding:20px; border-radius:6px; border:2px solid #555; box-shadow: inset 0 0 8px rgba(0,0,0,0.8); }
-        .eq-band { display:flex; flex-direction:column; align-items:center; width:9%; text-align:center; position:relative; }
-        .loudness-band { display:flex; flex-direction:column; align-items:center; width:9%; text-align:center; position:relative; margin-left: auto; }
-        .eq-band label { font-size:20px; color:#b0b0b0; text-shadow:0 1px 2px rgba(0,0,0,0.5); margin-bottom:1px; }
-        .loudness-band label { font-size:20px; color:#b0b0b0; text-shadow:0 1px 2px rgba(0,0,0,0.5); margin-bottom:1px; }
-        .gain-label { position:absolute; font-size:10px; color:#888; font-family:'Courier New', monospace; user-select:none; }
-        .gain-label.plus { top:25px; right:15px; }
-        .gain-label.minus { bottom:1px; right:15px; }
-        .eq-band input { -webkit-appearance: slider-vertical; width:20px; height:100px; background: linear-gradient(#555,#333); border:1px solid #777; border-radius:4px; box-shadow: inset 0 0 4px rgba(0,0,0,0.5); }
-        .loudness-band input { -webkit-appearance: slider-vertical; width:20px; height:100px; background: linear-gradient(#555,#333); border:1px solid #777; border-radius:4px; box-shadow: inset 0 0 4px rgba(0,0,0,0.5); }
-        .spectrum-analyzer { height:120px; background:#1e1e1e; position:relative; border:3px solid #555; border-radius:6px; box-shadow: inset 0 0 8px rgba(0,0,0,0.9); }
-        canvas.spectrum-canvas { width:100%; height:100%; display:block; }
-		.station-list { background-color: grey; color: white; }
-		#radioStation { background-color: #808080; color: white; border: 2px solid #777; border-radius: 6px; padding: 10px; font-weight: bold;       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2); }
-        #radioStation option { background-color: #808080; color: white; }
+        /* 90's Hi-Fi / Glossy Black Plastic Aesthetic */
+        body { 
+            background: #0d0d0d; 
+            margin: 0; 
+            font-family: 'Tahoma', Geneva, sans-serif; /* Cleaner, modern-for-90s look */
+        }
+        .hifi-container { 
+            max-width: 900px; 
+            margin: 30px auto; 
+            padding: 30px; 
+            background: linear-gradient(180deg, #1c1c1c, #0a0a0a); /* Deep black, glossy plastic */
+            border: 2px solid #333; 
+            border-radius: 6px; /* Squarer edges */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.8), inset 0 0 10px rgba(255,255,255,0.05); 
+            color:#e0e0e0; 
+            transition: filter 0.3s; 
+            position: relative;
+        }
+        .hifi-container.off { 
+            filter: brightness(0.4); 
+            pointer-events: none; 
+        }
+        .hifi-container.off .power-button { 
+            pointer-events: auto; 
+        }
+        .section { 
+            border: 1px solid #333; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            background: #151515; /* Flat black panel */
+            border-radius: 4px; 
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.6); 
+        }
+        .power-volume { 
+            display:flex; 
+            justify-content:space-between; 
+            align-items:center; 
+            margin-bottom:20px; 
+            padding-bottom: 10px;
+            border-bottom: 1px solid #222;
+        }
+        .power-button { 
+            background: #333; 
+            border: 1px solid #555; 
+            border-radius: 4px; 
+            padding: 10px 20px; 
+            color: #fff; 
+            font-size: 16px; 
+            font-weight: bold; 
+            text-shadow: 0 1px 1px rgba(0,0,0,0.7); 
+            cursor: pointer; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5); 
+            transition: background-color 0.1s; 
+            text-transform: uppercase;
+        }
+        .power-button.on { 
+            background: #c00; 
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.9), 0 0 10px rgba(255,0,0,0.5); 
+            border-color: #f00;
+        }
+        .power-button:hover { 
+            background: #444; 
+        }
+        .power-led { 
+            width: 12px; 
+            height: 12px; 
+            background: #111; 
+            border: 1px solid #444; 
+            border-radius: 50%; 
+            margin-top: 10px; 
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.9); 
+            transition: box-shadow 0.3s, background-color 0.3s; 
+        }
+        /* Changed LED color to classic 90s red/orange */
+        .power-led.on { 
+            background-color: #ff5500; 
+            box-shadow: 0 0 12px #ff5500, inset 0 0 6px #ff5500; 
+        }
+        .volume-control { 
+            flex-grow:1; 
+            text-align:center; 
+            position:relative; 
+        }
+        .volume-label { 
+            font-size: 18px; 
+            text-transform:uppercase; 
+            margin-bottom: 10px; 
+            color:#aaa; 
+            text-shadow: 0 1px 1px rgba(0,0,0,0.5); 
+        }
+        .knob-container { 
+            position:relative; 
+            width:150px; 
+            height:150px; 
+            margin:0 auto; 
+        }
+        canvas.knob { 
+            width:100%; 
+            height:100%; 
+            cursor:pointer; 
+            display:block; 
+        }
+        /* Changed Knob Display to a bright blue LED/VFD look */
+        .volume-display { 
+            position:absolute; 
+            top:50%; 
+            left:50%; 
+            transform:translate(-50%,-50%); 
+            font-size: 32px; 
+            font-weight: bold; 
+            color:#00ffff; /* Cyan/Blue VFD Color */
+            text-shadow:0 0 8px #00ffff; 
+            pointer-events:none; 
+            font-family: 'Digital-7', monospace; /* Placeholder for a digital font */
+        }
+        .knob-scale { 
+            position:absolute; 
+            top:50%; 
+            left:50%; 
+            transform:translate(-50%,-50%); 
+            width:170px; 
+            height:170px; 
+            border-radius:50%; 
+            pointer-events:none; 
+        }
+        /* Changed Brand Name to a gold/brass look */
+        .brand-name { 
+            font-family:'Impact', sans-serif; 
+            font-size: 28px; 
+            font-weight: normal; 
+            color:#ffc700; /* Gold */
+            text-shadow:0 1px 3px rgba(0,0,0,0.8); 
+            letter-spacing: 4px; 
+            position: absolute; 
+            top: 15px; 
+            right: 30px; 
+        }
+        .cd-panel { 
+            background: #000; /* Very dark display area */
+            padding: 15px; 
+            border-radius: 4px; 
+            margin: 15px 0; 
+            box-shadow: inset 0 0 6px rgba(0,0,0,0.9); 
+            border: 1px solid #333; 
+            justify-content: center; 
+        }
+        .cd-panel input[type="file"] { 
+            display:none; 
+        }
+        /* Updated buttons to a flatter, plastic look */
+        .button-effect { 
+            background: #252525; 
+            border: 1px solid #444; 
+            color: #fff; 
+            padding: 10px 20px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 16px; 
+            text-shadow: 0 1px 1px rgba(0,0,0,0.6); 
+            box-shadow: 0 2px 3px rgba(0,0,0,0.4); 
+            transition: background-color 0.1s; 
+            width: 95%; 
+            display:block; 
+            text-align:center; /* Center text on load button */
+        }
+        .button-effect.on { 
+            background: #111; 
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8); 
+        }
+        .button-effect:hover { 
+            background: #333; 
+        }
+        /* VFD/Digital Display look */
+        .track-info, .track-time { 
+            margin: 15px 0; 
+            padding: 10px; 
+            background: #050505; 
+            color: #00ffff; /* Cyan VFD Color */
+            font-family: 'Consolas', 'Courier New', monospace; 
+            border: 1px solid #333; 
+            border-radius: 2px; 
+            box-shadow: inset 0 0 8px rgba(0,255,255,0.4); 
+            font-size: 18px;
+        }
+        .transport-controls button { 
+            background: #333; 
+            border: 1px solid #555; 
+            color: #fff; 
+            padding: 10px 15px; 
+            margin: 5px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 18px; 
+            text-shadow: 0 1px 1px rgba(0,0,0,0.6); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            transition: background-color 0.1s;
+        }
+        .transport-controls button:hover:not(:disabled) { 
+            background: #555; 
+        }
+        .transport-controls button:disabled { 
+            background: #222; 
+            color: #444; 
+            cursor:not-allowed; 
+            box-shadow:none; 
+        }
+		.station-list { 
+            background-color: #222; 
+            color: white; 
+        }
+		.fm-radio-box select { 
+            width: 97%; 
+        }
+        .equalizer { 
+            display:flex; 
+            justify-content:space-between; 
+            align-items:center; 
+            height: 160px; /* Taller EQ */
+            background: #101010; 
+            padding: 15px; 
+            border-radius: 4px; 
+            border: 1px solid #333; 
+            box-shadow: inset 0 0 6px rgba(0,0,0,0.9); 
+        }
+        .eq-band { 
+            display:flex; 
+            flex-direction:column; 
+            align-items:center; 
+            width: 8%; 
+            text-align:center; 
+            position:relative; 
+        }
+        .loudness-band { 
+            display:flex; 
+            flex-direction:column; 
+            align-items:center; 
+            width: 8%; 
+            text-align:center; 
+            position:relative; 
+            margin-left: auto; 
+        }
+        .eq-band label, .loudness-band label { 
+            font-size: 14px; 
+            color:#aaa; 
+            text-shadow:0 1px 1px rgba(0,0,0,0.5); 
+            margin-bottom: 5px; 
+        }
+        .gain-label { 
+            position:absolute; 
+            font-size: 9px; 
+            color:#666; 
+            font-family:'Tahoma', sans-serif; 
+            user-select:none; 
+        }
+        .gain-label.plus { 
+            top: 25px; 
+            right: 1px; 
+        }
+        .gain-label.minus { 
+            bottom: 1px; 
+            right: 1px; 
+        }
+        .eq-band input, .loudness-band input { 
+            -webkit-appearance: slider-vertical; 
+            width: 15px; 
+            height: 120px; 
+            background: #000; 
+            border: 1px solid #333; 
+            border-radius: 2px; 
+            box-shadow: inset 0 0 3px rgba(0,0,0,0.7); 
+        }
+        /* Custom slider thumb for a 90s mixer look */
+        .eq-band input::-webkit-slider-thumb, .loudness-band input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 25px;
+            height: 15px;
+            background: linear-gradient(145deg, #777, #333);
+            border: 1px solid #999;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        .spectrum-analyzer { 
+            height: 100px; /* Shorter, classic display height */
+            background: #000; 
+            position:relative; 
+            border: 1px solid #333; 
+            border-radius: 4px; 
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.9); 
+        }
+        canvas.spectrum-canvas { 
+            width:100%; 
+            height:100%; 
+            display:block; 
+        }
+		
+		#radioStation { 
+            background-color: #111; 
+            color: #fff; 
+            border: 1px solid #444; 
+            border-radius: 4px; 
+            padding: 8px; 
+            font-weight: normal;       
+            text-shadow: none;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.7);
+            font-size: 14px;
+        }
+        #radioStation option { 
+            background-color: #111; 
+            color: white; 
+        }
         
         .effect-button-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(4, 1fr); /* More buttons per row */
+            gap: 10px; /* Less gap */
             width: 100%;
         }
         .effect-button-grid .button-effect {
             width: auto; 
             min-width: 0;
             text-align: center;
+            font-size: 14px; /* Smaller font for more compact look */
+            padding: 8px 10px;
         }
 
-        .playlist { font-size:16px; color:#00ff00; font-family:'Courier New', monospace; background:#0a2a0a; padding:10px; border:2px solid #444; border-radius:4px; box-shadow: inset 0 0 5px rgba(0,255,0,0.3); max-height:150px; overflow-y:auto; }
-        .playlist-item { padding:8px; cursor:pointer; border-radius:4px; }
-        .playlist-item:hover { background:#1a3a1a; }
-        .playlist-item.active { background:#2a4a2a; font-weight:bold; }
-        .error-message { color:#ff4444; text-align:center; padding:10px; font-family:'Courier New', monospace; display:none; }
-		.fm-radio-box { width: 250px; }
+        .playlist { 
+            font-size: 14px; 
+            color: #00ffff; /* Cyan VFD Color */
+            font-family:'Consolas', 'Courier New', monospace; 
+            background: #050505; 
+            padding: 10px; 
+            border: 1px solid #333; 
+            border-radius: 2px; 
+            box-shadow: inset 0 0 5px rgba(0,255,255,0.3); 
+            max-height: 150px; 
+            overflow-y:auto; 
+        }
+        .playlist-item { 
+            padding: 5px; 
+            cursor:pointer; 
+            border-radius: 2px; 
+        }
+        .playlist-item:hover { 
+            background: #1a1a1a; 
+        }
+        .playlist-item.active { 
+            background: #004444; 
+            font-weight:bold; 
+        }
+        .error-message { 
+            color:#ff0000; 
+            text-align:center; 
+            padding:10px; 
+            font-family:'Tahoma', sans-serif; 
+            display:none; 
+        }
+		.fm-radio-box { 
+            width: 250px; 
+        }
 
-        .cassette-controls { background:#2a2a2a; padding:15px; margin-top:10px; border:2px solid #555; border-radius:6px; }
-        .cassette-controls h4 { color:#ffaa44; margin:0 0 10px 0; }
-        .quality-selector { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-        .quality-btn { background:#444; border:1px solid #666; color:#ccc; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:12px; }
-        .quality-btn.active { background:#664422; color:#ffaa44; border-color:#aa8844; }
+        .cassette-controls { 
+            background:#101010; 
+            padding:15px; 
+            margin-top:15px; 
+            border:1px solid #333; 
+            border-radius:4px; 
+        }
+        .cassette-controls h4 { 
+            color:#00ffff; /* Cyan/Blue highlight */
+            margin:0 0 10px 0; 
+            border-bottom: 1px dashed #222;
+            padding-bottom: 5px;
+        }
+        .quality-selector { 
+            display:flex; 
+            gap:10px; 
+            flex-wrap:wrap; 
+            align-items:center; 
+        }
+        .quality-btn { 
+            background:#1a1a1a; 
+            border:1px solid #444; 
+            color:#ccc; 
+            padding:6px 12px; 
+            border-radius:3px; 
+            cursor:pointer; 
+            font-size:12px; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        .quality-btn.active { 
+            background:#004444; 
+            color:#00ffff; 
+            border-color:#00ffff; 
+        }
+    </style>
+    <style>
+        @font-face {
+            font-family: 'Digital-7';
+            src: local('Consolas'), local('Courier New');
+        }
     </style>
 </head>
 <body>
@@ -92,26 +425,26 @@
                     <div class="knob-scale"></div>
                 </div>
             </div>
-            <div class="brand-name">Crap-turon 5000</div>
+            <div class="brand-name">CRAP-TURON 5000</div>
         </div>
 
         <div class="section cd-transport">
             <div class="cd-panel">
-                <label for="mp3Input" class="button-effect" id="loadCdButton">LOAD A CD</label>
+                <label for="mp3Input" class="button-effect" id="loadCdButton">LOAD A CD (MP3)</label>
                 <input type="file" id="mp3Input" accept="audio/mp3" multiple>
             </div>
             <div class="track-info" id="trackInfo" style="text-align: center;">No track loaded</div>
             <div class="track-time" id="trackTime" style="text-align: center;">0:00 / 0:00</div>
             <div class="transport-controls" style="text-align: center;">
-                <button id="prevButton">⮜</button>
+                <button id="prevButton">« REW</button>
                 <button id="playButton">▶ PLAY</button>
-                <button id="nextButton">⮞</button>
+                <button id="nextButton">FF »</button>
             </div>
         </div>
 
         <div class="section cd-transport">
             <div class="cd-panel" style="text-align: center;">
-                <label for="radioStation" class="button-effect">FM RADIO</label>
+                <label for="radioStation" class="button-effect">FM RADIO TUNER</label>
                 <select id="radioStation" class="button-effect"><option value="">Checking for live stations...</option></select>
             </div>
         </div>
@@ -195,12 +528,12 @@
                 <button class="button-effect" id="cassetteButton">Cassette Mode: OFF</button>
                 <button class="button-effect" id="tapeTypeButton">Tape Type: Normal</button>
                 <button class="button-effect" id="bolbyButton">Bolby B Type: OFF</button>
-                </div>
+            </div>
 
             <div class="cassette-controls" id="cassetteControls" style="display:none; width:100%;">
                 <h4>Cassette Quality Settings</h4>
                 <div class="quality-selector">
-                    <span style="color:#ccc; margin-right:10px;">Tape Quality:</span>
+                    <span style="color:#aaa; margin-right:10px;">Tape Quality:</span>
                     <button class="quality-btn active" data-quality="normal">Normal</button>
                     <button class="quality-btn" data-quality="worn">Worn</button>
                     <button class="quality-btn" data-quality="damaged">Damaged</button>
@@ -211,12 +544,12 @@
         </div>
 
         <div class="section playlist">
-            <div>PLAYLIST</div>
+            <div>TRACK LIST</div>
             <div id="playlistContainer"></div>
         </div>
     </div>
 
-    <div style="text-align: center; color: #666; font-size: 15px; margin-top: 20px; text-shadow: 0 1px 1px rgba(0,0,0,0.5);">
+    <div style="text-align: center; color: #444; font-size: 14px; margin-top: 20px; text-shadow: 0 1px 1px rgba(0,0,0,0.5);">
         Crap-turon 5000 brought to you by Craptronics Plc
         </div>
     <script>
@@ -735,32 +1068,36 @@
 
             knobCtx.clearRect(0, 0, knobCanvas.width, knobCanvas.height);
 
+            // Outer ring - darker grey/black
             knobCtx.beginPath();
             knobCtx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-            knobCtx.fillStyle = '#111';
+            knobCtx.fillStyle = '#222';
             knobCtx.fill();
 
+            // Progress arc - changed color to bright blue/cyan
             knobCtx.beginPath();
             knobCtx.arc(centerX, centerY, radius, startAngle, angle, false);
-            knobCtx.strokeStyle = '#ff4444';
+            knobCtx.strokeStyle = '#00ffff'; /* Cyan/Blue */
             knobCtx.lineWidth = 10;
             knobCtx.stroke();
 
+            // Inner knob body - lighter grey for a plastic/metallic look
             knobCtx.beginPath();
             knobCtx.arc(centerX, centerY, radius - 15, 0, 2 * Math.PI, false);
-            knobCtx.fillStyle = '#333';
+            knobCtx.fillStyle = '#444';
             knobCtx.fill();
-            knobCtx.strokeStyle = '#555';
+            knobCtx.strokeStyle = '#666';
             knobCtx.lineWidth = 2;
             knobCtx.stroke();
 
+            // Indicator line - changed color to bright red/orange
             const indicatorLength = radius - 15;
             const indicatorX = centerX + indicatorLength * Math.cos(angle);
             const indicatorY = centerY + indicatorLength * Math.sin(angle);
             knobCtx.beginPath();
             knobCtx.moveTo(centerX, centerY);
             knobCtx.lineTo(indicatorX, indicatorY);
-            knobCtx.strokeStyle = '#ff4444';
+            knobCtx.strokeStyle = '#ff5500'; /* Red/Orange */
             knobCtx.lineWidth = 5;
             knobCtx.stroke();
 
@@ -1115,7 +1452,7 @@
                     });
                 }
 
-                playButton.textContent = '⏸⏸ PAUSE';
+                playButton.textContent = '⏸ PAUSE'; /* Simplified button text */
             });
 
             audioElement.addEventListener('error', () => {
@@ -1217,7 +1554,7 @@
                     errorMessage.style.display = 'block';
                     errorMessage.textContent = 'Failed to play audio.';
                 });
-                playButton.textContent = '⏸⏸ PAUSE';
+                playButton.textContent = '⏸ PAUSE';
             } else {
                 audioElement.pause();
                 playButton.textContent = '▶ PLAY';
@@ -1445,7 +1782,7 @@
                     audioElement.play().catch(err => console.error('Play error:', err));
                 }
 
-                playButton.textContent = '⏸⏸ PAUSE';
+                playButton.textContent = '⏸ PAUSE';
                 errorMessage.style.display = 'none';
             });
         }
@@ -1560,17 +1897,18 @@
 
             if (analyser) {
                 analyser.getByteFrequencyData(dataArray);
-                spectrumCtx.fillStyle = '#1e1e1e';
+                spectrumCtx.fillStyle = '#000000'; /* Black background for analyzer */
                 spectrumCtx.fillRect(0,0,spectrumCanvas.width,spectrumCanvas.height);
 
                 const barWidth = (spectrumCanvas.width / bufferLength) * 2.5;
                 let x = 0;
                 for (let i=0;i<bufferLength;i++) {
                     const barHeight = dataArray[i] * (spectrumCanvas.height / 255);
+                    /* Changed gradient to classic 90s blue/cyan/white */
                     const gradient = spectrumCtx.createLinearGradient(0, spectrumCanvas.height, 0, spectrumCanvas.height - barHeight);
-                    gradient.addColorStop(0, '#00ff00');
-                    gradient.addColorStop(0.5, '#ffff00');
-                    gradient.addColorStop(1, '#ff0000');
+                    gradient.addColorStop(0, '#00ffff'); /* Cyan */
+                    gradient.addColorStop(0.5, '#0099ff'); /* Blue */
+                    gradient.addColorStop(1, '#ffffff'); /* White tip */
                     spectrumCtx.fillStyle = gradient;
                     spectrumCtx.fillRect(x, spectrumCanvas.height - barHeight, barWidth, barHeight);
                     x += barWidth + 1;
